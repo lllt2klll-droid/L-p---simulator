@@ -7,21 +7,23 @@ export class StandaloneTire {
 
     // Customization parameters
     this.params = {
-      diameter: 3.2,          // Outer diameter
-      width: 1.8,             // Tire tread width
-      rimRatio: 0.58,         // Rim diameter as fraction of tire diameter
-      rubberColor: '#2b2d31', // Deep charcoal clay rubber like reference
-      rimColor: '#3c4048',    // Rim backdrop color
-      eyeColor: '#4ea8de',    // Cyan/blue clay eyes like reference
-      noseSmileColor: '#ff733b', // Bright orange clay nose and smile like reference
+      diameter: 3.2,             // Outer diameter
+      width: 1.8,                // Tire tread width
+      rimRatio: 0.58,            // Rim diameter as fraction of tire diameter
+      rubberColor: '#2b2d31',    // Deep charcoal clay rubber
+      rimColor: '#3c4048',       // Rim backdrop color
+      eyeColor: '#4ea8de',       // Cyan/blue clay eyes
+      noseSmileColor: '#ff733b', // Bright orange clay nose & smile
+      letterColor: '#ffd166',    // Bright warm gold clay for "TÂN" lettering
       roughness: 0.65,
       metalness: 0.05,
-      treadPattern: 'chevron', // chevron, chunky, paddle, heart, smooth
-      rimStyle: 'face',        // face, star, swirl, spokes, disc
+      treadPattern: 'chevron',   // chevron, chunky, paddle, heart, smooth
+      rimStyle: 'face',          // face, star, swirl, spokes, disc
       faceEnabled: true,
-      gyroFace: false,         // whether face stays upright or tumbles with tire
+      gyroFace: false,           // whether face stays upright or tumbles with tire
       hasSidewallRings: true,
-      antennaStyle: 'none'     // none, star, heart
+      showTanText: true,         // Show 3D raised "TÂN" lettering
+      antennaStyle: 'crown'      // none, crown, star, heart
     };
 
     // Dimensions
@@ -79,13 +81,13 @@ export class StandaloneTire {
 
     this.rimMaterial = new THREE.MeshStandardMaterial({
       color: new THREE.Color(this.params.rimColor),
-      roughness: 0.5,
-      metalness: 0.08
+      roughness: 0.45,
+      metalness: 0.1
     });
 
     this.eyeMaterial = new THREE.MeshStandardMaterial({
       color: new THREE.Color(this.params.eyeColor),
-      roughness: 0.35,
+      roughness: 0.3,
       metalness: 0.05
     });
 
@@ -97,8 +99,21 @@ export class StandaloneTire {
 
     this.accentMaterial = new THREE.MeshStandardMaterial({
       color: new THREE.Color(this.params.noseSmileColor),
-      roughness: 0.45,
+      roughness: 0.4,
       metalness: 0.05
+    });
+
+    this.letterMaterial = new THREE.MeshStandardMaterial({
+      color: new THREE.Color(this.params.letterColor),
+      roughness: 0.32,
+      metalness: 0.12,
+      emissive: new THREE.Color(0x3a2a00)
+    });
+
+    this.blushMaterial = new THREE.MeshStandardMaterial({
+      color: 0xff8fa3,
+      roughness: 0.5,
+      metalness: 0.02
     });
 
     this.buildFullTire();
@@ -139,17 +154,15 @@ export class StandaloneTire {
     // Build rim & wheel hub
     this.buildRim();
 
-    // Build decorative sidewall rings if enabled
-    if (this.params.hasSidewallRings) {
-      this.buildSidewallDetails();
-    }
+    // Build decorative sidewall rings and 3D "TÂN" lettering
+    this.buildSidewallDetails();
 
     // Build Face if rim style is 'face' or faceEnabled
     if (this.params.faceEnabled && this.params.rimStyle === 'face') {
       this.buildCuteFace();
     }
 
-    // Build Antenna
+    // Build Antenna / Crown topper
     if (this.params.antennaStyle !== 'none') {
       this.buildAntenna();
     }
@@ -171,29 +184,25 @@ export class StandaloneTire {
     const rimR = outerR * this.params.rimRatio;
     const halfW = this.params.width / 2;
 
-    // Generate ultra-smooth, plump, rounded toy tire profile
-    // Lathe revolves around Y axis.
-    // In lathe coordinates: X = radius from center, Y = width along axle.
+    // Plump, perfectly rounded, chunky toy tire profile
     const controlPoints = [
       new THREE.Vector2(rimR, -halfW * 0.70),
       new THREE.Vector2(rimR * 1.06, -halfW * 0.94),
       new THREE.Vector2(rimR + (outerR - rimR) * 0.42, -halfW * 1.02),
       new THREE.Vector2(outerR * 0.92, -halfW * 0.96),
-      new THREE.Vector2(outerR * 0.985, -halfW * 0.55),
+      new THREE.Vector2(outerR * 0.986, -halfW * 0.55),
       new THREE.Vector2(outerR, 0),
-      new THREE.Vector2(outerR * 0.985, halfW * 0.55),
+      new THREE.Vector2(outerR * 0.986, halfW * 0.55),
       new THREE.Vector2(outerR * 0.92, halfW * 0.96),
       new THREE.Vector2(rimR + (outerR - rimR) * 0.42, halfW * 1.02),
       new THREE.Vector2(rimR * 1.06, halfW * 0.94),
       new THREE.Vector2(rimR, halfW * 0.70)
     ];
 
-    // Smooth spline interpolation
     const spline = new THREE.SplineCurve(controlPoints);
-    const profilePoints = spline.getPoints(24);
+    const profilePoints = spline.getPoints(26);
 
     const latheGeo = new THREE.LatheGeometry(profilePoints, 48);
-    // Align lathe axis (Y) with tire axle (local X axis)
     latheGeo.rotateZ(-Math.PI / 2);
     latheGeo.computeVertexNormals();
 
@@ -218,37 +227,26 @@ export class StandaloneTire {
       const cosA = Math.cos(angle);
       const sinA = Math.sin(angle);
 
-      // Radial vector in local Y-Z plane
       const radY = cosA;
       const radZ = sinA;
 
-      // Tangent vector along perimeter
-      const tanY = -sinA;
-      const tanZ = cosA;
-
       if (pattern === 'chevron') {
-        // V-groove chevron treads like reference #2
+        // Chunky V-groove chevron treads matching Reference #2
         const armW = width * 0.44;
-        const armH = outerR * 0.085;
-        const armL = outerR * 0.16;
+        const armH = outerR * 0.095;
+        const armL = outerR * 0.17;
         const armGeo = new THREE.BoxGeometry(armW, armH, armL);
 
         [-1, 1].forEach(side => {
           const arm = new THREE.Mesh(armGeo, treadMat);
           arm.castShadow = true;
 
-          // Position on perimeter
           const xPos = side * (width * 0.22);
           const yPos = outerR * 0.992 * radY;
           const zPos = outerR * 0.992 * radZ;
           arm.position.set(xPos, yPos, zPos);
 
-          // Local basis for tread block:
-          // Local Y = radial outward (radY, radZ)
-          // Local Z = perimeter tangent (tanY, tanZ)
-          // Local X = axle direction
-          // Rotate slightly around radial normal for V angle
-          const vAngle = side * 0.40;
+          const vAngle = side * 0.42;
           const rotQ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -angle);
           const vQ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), vAngle);
           arm.quaternion.copy(rotQ).multiply(vQ);
@@ -257,11 +255,10 @@ export class StandaloneTire {
         });
 
       } else if (pattern === 'chunky') {
-        // Chunky off-road rectangular cleat blocks
         const isStagger = i % 2 === 0;
         const cleatW = width * 0.38;
-        const cleatH = outerR * 0.11;
-        const cleatL = outerR * 0.14;
+        const cleatH = outerR * 0.12;
+        const cleatL = outerR * 0.15;
         const cleatGeo = new THREE.BoxGeometry(cleatW, cleatH, cleatL);
 
         const cleat = new THREE.Mesh(cleatGeo, treadMat);
@@ -272,7 +269,6 @@ export class StandaloneTire {
         cleat.quaternion.setFromAxisAngle(new THREE.Vector3(1, 0, 0), -angle);
         this.rollPivot.add(cleat);
 
-        // Center mini block
         const centerGeo = new THREE.BoxGeometry(width * 0.22, cleatH * 0.85, cleatL * 0.8);
         const center = new THREE.Mesh(centerGeo, treadMat);
         center.castShadow = true;
@@ -281,8 +277,7 @@ export class StandaloneTire {
         this.rollPivot.add(center);
 
       } else if (pattern === 'paddle') {
-        // Wide paddle slats
-        const paddleGeo = new THREE.BoxGeometry(width * 0.88, outerR * 0.12, outerR * 0.14);
+        const paddleGeo = new THREE.BoxGeometry(width * 0.88, outerR * 0.13, outerR * 0.15);
         const paddle = new THREE.Mesh(paddleGeo, treadMat);
         paddle.castShadow = true;
         paddle.position.set(0, outerR * 1.005 * radY, outerR * 1.005 * radZ);
@@ -290,8 +285,7 @@ export class StandaloneTire {
         this.rollPivot.add(paddle);
 
       } else if (pattern === 'heart') {
-        // Cute cylindrical heart/dot treads
-        const heartGeo = new THREE.CylinderGeometry(outerR * 0.08, outerR * 0.08, width * 0.32, 12);
+        const heartGeo = new THREE.CylinderGeometry(outerR * 0.085, outerR * 0.085, width * 0.34, 14);
         heartGeo.rotateZ(Math.PI / 2);
         const heart = new THREE.Mesh(heartGeo, treadMat);
         heart.castShadow = true;
@@ -308,7 +302,6 @@ export class StandaloneTire {
     const halfW = this.params.width / 2;
     const style = this.params.rimStyle;
 
-    // Recessed center hub cylinder / disc (both sides)
     const hubDepth = halfW * 0.8;
     const discGeo = new THREE.CylinderGeometry(rimR * 0.98, rimR * 0.98, hubDepth, 32);
     discGeo.rotateZ(Math.PI / 2);
@@ -401,15 +394,184 @@ export class StandaloneTire {
     const halfW = this.params.width / 2;
     const ringR = (outerR + rimR) * 0.5;
 
-    const ringGeo = new THREE.TorusGeometry(ringR, outerR * 0.035, 16, 48);
-    ringGeo.rotateY(Math.PI / 2);
+    // Decorative sidewall rings
+    if (this.params.hasSidewallRings) {
+      const ringGeo = new THREE.TorusGeometry(ringR, outerR * 0.035, 16, 48);
+      ringGeo.rotateY(Math.PI / 2);
 
-    [-1, 1].forEach(side => {
-      const ring = new THREE.Mesh(ringGeo, this.accentMaterial);
-      ring.position.x = side * (halfW * 0.98);
-      ring.castShadow = true;
-      this.rollPivot.add(ring);
+      [-1, 1].forEach(side => {
+        const ring = new THREE.Mesh(ringGeo, this.accentMaterial);
+        ring.position.x = side * (halfW * 0.98);
+        ring.castShadow = true;
+        this.rollPivot.add(ring);
+      });
+    }
+
+    // 3D RAISED CLAY LETTERING "★ TÂN ★" CURVED ALONG THE UPPER SIDEWALL
+    if (this.params.showTanText) {
+      [-1, 1].forEach(side => {
+        this.buildCurvedTextTan(side, halfW, outerR, rimR);
+      });
+    }
+  }
+
+  // Builder for 3D raised curved "★ TÂN ★" on sidewall
+  buildCurvedTextTan(side, halfW, outerR, rimR) {
+    const textRadius = rimR + (outerR - rimR) * 0.62;
+    const letterScale = outerR * 0.45;
+    const xPos = side * (halfW * 1.015);
+
+    // Letter elements to curve along upper arc
+    // Angle spacing along the circular upper perimeter (radians)
+    const elements = [
+      { type: 'star', angle: -0.42 },
+      { type: 'T',    angle: -0.21 },
+      { type: 'A',    angle: 0.00 },
+      { type: 'N',    angle: 0.21 },
+      { type: 'star', angle: 0.42 }
+    ];
+
+    elements.forEach(item => {
+      let mesh = null;
+      if (item.type === 'T') {
+        mesh = this.createLetterT(letterScale);
+      } else if (item.type === 'A') {
+        mesh = this.createLetterA(letterScale);
+      } else if (item.type === 'N') {
+        mesh = this.createLetterN(letterScale);
+      } else if (item.type === 'star') {
+        mesh = this.createClayStar(letterScale * 0.42);
+      }
+
+      if (!mesh) return;
+
+      // When side = 1 (right side): angle positive is +Z
+      // When side = -1 (left side): mirror angle so text reads left-to-right on both sides!
+      const effAngle = side > 0 ? item.angle : -item.angle;
+
+      const y = textRadius * Math.cos(effAngle);
+      const z = textRadius * Math.sin(effAngle);
+
+      mesh.position.set(xPos, y, z);
+
+      // Rotate letter to align tangentially to the circle arc
+      // Base rotation so letter face normal points outward (+X on right, -X on left)
+      if (side > 0) {
+        mesh.rotation.y = Math.PI / 2;
+        mesh.rotation.x = effAngle;
+      } else {
+        mesh.rotation.y = -Math.PI / 2;
+        mesh.rotation.x = -effAngle;
+      }
+
+      this.rollPivot.add(mesh);
     });
+
+    // Cute decorative bottom dots on opposite side of tire
+    for (let i = -2; i <= 2; i++) {
+      const dotA = Math.PI + i * 0.18;
+      const dotGeo = new THREE.SphereGeometry(outerR * 0.035, 10, 8);
+      dotGeo.scale(0.5, 1, 1);
+      const dot = new THREE.Mesh(dotGeo, this.letterMaterial);
+      dot.position.set(xPos, textRadius * Math.cos(dotA), textRadius * Math.sin(dotA));
+      this.rollPivot.add(dot);
+    }
+  }
+
+  createLetterT(scale) {
+    const group = new THREE.Group();
+    // Top bar
+    const barGeo = new THREE.BoxGeometry(scale * 0.38, scale * 0.08, scale * 0.065);
+    const topBar = new THREE.Mesh(barGeo, this.letterMaterial);
+    topBar.castShadow = true;
+    topBar.position.y = scale * 0.16;
+    group.add(topBar);
+
+    // Stem
+    const stemGeo = new THREE.BoxGeometry(scale * 0.09, scale * 0.35, scale * 0.065);
+    const stem = new THREE.Mesh(stemGeo, this.letterMaterial);
+    stem.castShadow = true;
+    stem.position.y = -scale * 0.02;
+    group.add(stem);
+
+    return group;
+  }
+
+  createLetterA(scale) {
+    const group = new THREE.Group();
+    const legGeo = new THREE.BoxGeometry(scale * 0.08, scale * 0.38, scale * 0.065);
+
+    // Left leg
+    const leftLeg = new THREE.Mesh(legGeo, this.letterMaterial);
+    leftLeg.castShadow = true;
+    leftLeg.position.set(-scale * 0.09, -scale * 0.02, 0);
+    leftLeg.rotation.z = 0.28;
+    group.add(leftLeg);
+
+    // Right leg
+    const rightLeg = new THREE.Mesh(legGeo, this.letterMaterial);
+    rightLeg.castShadow = true;
+    rightLeg.position.set(scale * 0.09, -scale * 0.02, 0);
+    rightLeg.rotation.z = -0.28;
+    group.add(rightLeg);
+
+    // Crossbar
+    const crossGeo = new THREE.BoxGeometry(scale * 0.17, scale * 0.065, scale * 0.065);
+    const cross = new THREE.Mesh(crossGeo, this.letterMaterial);
+    cross.castShadow = true;
+    cross.position.set(0, -scale * 0.06, 0);
+    group.add(cross);
+
+    // Hat circumflex '^' for Â
+    const hatGeo = new THREE.BoxGeometry(scale * 0.065, scale * 0.13, scale * 0.065);
+    const leftHat = new THREE.Mesh(hatGeo, this.letterMaterial);
+    leftHat.castShadow = true;
+    leftHat.position.set(-scale * 0.045, scale * 0.23, 0);
+    leftHat.rotation.z = 0.75;
+    group.add(leftHat);
+
+    const rightHat = new THREE.Mesh(hatGeo, this.letterMaterial);
+    rightHat.castShadow = true;
+    rightHat.position.set(scale * 0.045, scale * 0.23, 0);
+    rightHat.rotation.z = -0.75;
+    group.add(rightHat);
+
+    return group;
+  }
+
+  createLetterN(scale) {
+    const group = new THREE.Group();
+    const stemGeo = new THREE.BoxGeometry(scale * 0.08, scale * 0.38, scale * 0.065);
+
+    // Left stem
+    const leftStem = new THREE.Mesh(stemGeo, this.letterMaterial);
+    leftStem.castShadow = true;
+    leftStem.position.set(-scale * 0.13, -scale * 0.02, 0);
+    group.add(leftStem);
+
+    // Right stem
+    const rightStem = new THREE.Mesh(stemGeo, this.letterMaterial);
+    rightStem.castShadow = true;
+    rightStem.position.set(scale * 0.13, -scale * 0.02, 0);
+    group.add(rightStem);
+
+    // Diagonal
+    const diagGeo = new THREE.BoxGeometry(scale * 0.075, scale * 0.41, scale * 0.065);
+    const diag = new THREE.Mesh(diagGeo, this.letterMaterial);
+    diag.castShadow = true;
+    diag.position.set(0, -scale * 0.02, 0);
+    diag.rotation.z = -0.62;
+    group.add(diag);
+
+    return group;
+  }
+
+  createClayStar(size) {
+    const starGeo = new THREE.OctahedronGeometry(size, 0);
+    starGeo.scale(0.5, 1.0, 1.0);
+    const star = new THREE.Mesh(starGeo, this.letterMaterial);
+    star.castShadow = true;
+    return star;
   }
 
   buildCuteFace() {
@@ -469,7 +631,19 @@ export class StandaloneTire {
       hl2.position.set(eyeScale * 0.3, eyeScale * 0.12, -eyeScale * 0.08);
       eye2.add(hl2);
 
-      // Nose: Round clay ball in center
+      // Cute Blushing Cheeks (pink clay)
+      const blushGeo = new THREE.SphereGeometry(rimR * 0.14, 14, 10);
+      blushGeo.scale(0.3, 1.0, 1.0);
+
+      const leftBlush = new THREE.Mesh(blushGeo, this.blushMaterial);
+      leftBlush.position.set(rimR * 0.09, -rimR * 0.08, rimR * 0.44);
+      faceSide.add(leftBlush);
+
+      const rightBlush = new THREE.Mesh(blushGeo, this.blushMaterial);
+      rightBlush.position.set(rimR * 0.09, -rimR * 0.08, -rimR * 0.44);
+      faceSide.add(rightBlush);
+
+      // Nose: Round clay ball in center with highlight
       const noseGeo = new THREE.SphereGeometry(rimR * 0.22, 20, 16);
       noseGeo.scale(0.85, 1.0, 1.0);
       const nose = new THREE.Mesh(noseGeo, this.accentMaterial);
@@ -477,7 +651,11 @@ export class StandaloneTire {
       nose.position.set(rimR * 0.14, 0, 0);
       faceSide.add(nose);
 
-      // Smile: Curved clay sausage
+      const noseHl = new THREE.Mesh(hlGeo, hlMat);
+      noseHl.position.set(rimR * 0.14 + eyeScale * 0.18, eyeScale * 0.12, 0);
+      faceSide.add(noseHl);
+
+      // Smile: Thick curved clay sausage
       const smileCurve = new THREE.CatmullRomCurve3([
         new THREE.Vector3(rimR * 0.08, -rimR * 0.18, -rimR * 0.44),
         new THREE.Vector3(rimR * 0.12, -rimR * 0.42, -rimR * 0.25),
@@ -489,6 +667,16 @@ export class StandaloneTire {
       const smile = new THREE.Mesh(smileGeo, this.accentMaterial);
       smile.castShadow = true;
       faceSide.add(smile);
+
+      // Cute cheek dimples at smile tips
+      const dimpleGeo = new THREE.SphereGeometry(rimR * 0.08, 12, 10);
+      const leftDimple = new THREE.Mesh(dimpleGeo, this.accentMaterial);
+      leftDimple.position.set(rimR * 0.09, -rimR * 0.18, rimR * 0.44);
+      faceSide.add(leftDimple);
+
+      const rightDimple = new THREE.Mesh(dimpleGeo, this.accentMaterial);
+      rightDimple.position.set(rimR * 0.09, -rimR * 0.18, -rimR * 0.44);
+      faceSide.add(rightDimple);
 
       this.faceAnchor.add(faceSide);
     });
@@ -509,18 +697,46 @@ export class StandaloneTire {
     const spring = new THREE.Mesh(springGeo, this.accentMaterial);
     this.antennaGroup.add(spring);
 
-    const topperGeo = style === 'star'
-      ? new THREE.OctahedronGeometry(0.35, 0)
-      : new THREE.SphereGeometry(0.3, 16, 12);
-    const topperMat = new THREE.MeshStandardMaterial({
-      color: 0xffe066,
-      emissive: 0xffc720,
-      emissiveIntensity: 0.4,
-      roughness: 0.3
-    });
-    const topper = new THREE.Mesh(topperGeo, topperMat);
-    topper.position.set(0, outerR + 1.35, 0);
-    this.antennaGroup.add(topper);
+    if (style === 'crown') {
+      // Golden "TÂN" Crown Badge on top of tire!
+      const crownGroup = new THREE.Group();
+      crownGroup.position.set(0, outerR + 1.38, 0);
+
+      // Gold badge base
+      const badgeGeo = new THREE.CylinderGeometry(0.55, 0.55, 0.12, 24);
+      badgeGeo.rotateX(Math.PI / 2);
+      const badge = new THREE.Mesh(badgeGeo, this.letterMaterial);
+      badge.castShadow = true;
+      crownGroup.add(badge);
+
+      // Mini 3D "TÂN" text on the crown badge
+      const letterScale = 0.38;
+      const tMesh = this.createLetterT(letterScale);
+      tMesh.position.set(-0.25, 0, 0.08);
+      crownGroup.add(tMesh);
+
+      const aMesh = this.createLetterA(letterScale);
+      aMesh.position.set(0, 0, 0.08);
+      crownGroup.add(aMesh);
+
+      const nMesh = this.createLetterN(letterScale);
+      nMesh.position.set(0.25, 0, 0.08);
+      crownGroup.add(nMesh);
+
+      this.antennaGroup.add(crownGroup);
+
+    } else if (style === 'star') {
+      const topperGeo = new THREE.OctahedronGeometry(0.38, 0);
+      const topper = new THREE.Mesh(topperGeo, this.letterMaterial);
+      topper.position.set(0, outerR + 1.35, 0);
+      this.antennaGroup.add(topper);
+
+    } else if (style === 'heart') {
+      const topperGeo = new THREE.SphereGeometry(0.32, 16, 12);
+      const topper = new THREE.Mesh(topperGeo, this.accentMaterial);
+      topper.position.set(0, outerR + 1.35, 0);
+      this.antennaGroup.add(topper);
+    }
   }
 
   updateCustomization(newParams) {
@@ -534,6 +750,9 @@ export class StandaloneTire {
     this.rimMaterial.color.set(this.params.rimColor);
     this.eyeMaterial.color.set(this.params.eyeColor);
     this.accentMaterial.color.set(this.params.noseSmileColor);
+    if (this.params.letterColor) {
+      this.letterMaterial.color.set(this.params.letterColor);
+    }
 
     // Rebuild geometry
     this.buildFullTire();
@@ -553,7 +772,8 @@ export class StandaloneTire {
   }
 
   update(dt, input) {
-    // 1. Steering & Acceleration (Supports both analog joystick axis and digital keys)
+    // 1. Steering & Acceleration
+    // When input.left is pressed or joystick dragged left: steerInput is POSITIVE
     let steerInput = 0;
     if (typeof input.steerAxis === 'number' && Math.abs(input.steerAxis) > 0.02) {
       steerInput = input.steerAxis;
@@ -613,9 +833,9 @@ export class StandaloneTire {
     const deltaDist = this.linearSpeed * dt;
 
     // Steering: Rotate forward vector around local Up normal
-    // When steerInput > 0 (left), rotates heading towards -Right (left)
+    // Fixed: Left input steers LEFT, Right input steers RIGHT!
     if (Math.abs(this.steeringAngle) > 0.001) {
-      const steerDelta = -this.steeringAngle * dt;
+      const steerDelta = this.steeringAngle * dt;
       this.forward.applyAxisAngle(this.up, steerDelta).normalize();
 
       // Maintain strict Right-Handed Orthonormal Basis:

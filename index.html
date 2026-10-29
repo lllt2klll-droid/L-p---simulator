@@ -112,6 +112,10 @@
           <div>
             <div class="section-label">Quick Presets</div>
             <div class="presets-grid">
+              <div class="preset-chip" data-preset="tan">
+                <span class="emoji">👑</span>
+                <span>TÂN Pro</span>
+              </div>
               <div class="preset-chip" data-preset="buddy">
                 <span class="emoji">😃</span>
                 <span>Clay Buddy</span>
@@ -131,10 +135,6 @@
               <div class="preset-chip" data-preset="tractor">
                 <span class="emoji">🌾</span>
                 <span>Tractor</span>
-              </div>
-              <div class="preset-chip" data-preset="mint">
-                <span class="emoji">🌀</span>
-                <span>Mint Swirl</span>
               </div>
             </div>
           </div>
@@ -258,6 +258,21 @@
             </div>
           </div>
 
+          <!-- Letter TÂN Color -->
+          <div class="control-row">
+            <div class="color-picker-row">
+              <span class="section-label" style="margin: 0;">Màu Chữ TÂN (Gold / Clay)</span>
+              <input type="color" id="color-letter" value="#ffd166" />
+            </div>
+            <div class="swatches-row">
+              <div class="swatch" data-target="color-letter" data-color="#ffd166" style="background: #ffd166;"></div>
+              <div class="swatch" data-target="color-letter" data-color="#ffffff" style="background: #ffffff;"></div>
+              <div class="swatch" data-target="color-letter" data-color="#ff733b" style="background: #ff733b;"></div>
+              <div class="swatch" data-target="color-letter" data-color="#2ed573" style="background: #2ed573;"></div>
+              <div class="swatch" data-target="color-letter" data-color="#70a1ff" style="background: #70a1ff;"></div>
+            </div>
+          </div>
+
           <!-- Roughness / Glossiness Slider -->
           <div class="control-row">
             <div class="control-header">
@@ -303,18 +318,33 @@
             </label>
           </div>
 
+          <!-- 3D Tan Text Toggle -->
+          <div class="toggle-row">
+            <div>
+              <div style="font-size: 13px; font-weight: 700;">Chữ 3D "TÂN" Nổi</div>
+              <div style="font-size: 11px; color: var(--text-muted);">Khắc chữ TÂN nổi cao cấp quanh thành lốp</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggle-tan-text" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
           <!-- Spring Antenna -->
           <div>
-            <div class="section-label">Spring Antenna Topper</div>
+            <div class="section-label">Đỉnh Lốp / Vương Miện</div>
             <div class="options-grid">
-              <div class="opt-card selected" data-antenna="none">
-                <span>🚫</span> None
+              <div class="opt-card selected" data-antenna="crown">
+                <span>👑</span> Vương Miện TÂN
               </div>
               <div class="opt-card" data-antenna="star">
-                <span>⭐</span> Star Spring
+                <span>⭐</span> Ngôi Sao Vàng
               </div>
               <div class="opt-card" data-antenna="heart">
-                <span>💖</span> Heart Spring
+                <span>💖</span> Trái Tim Hồng
+              </div>
+              <div class="opt-card" data-antenna="none">
+                <span>🚫</span> Không Có
               </div>
             </div>
           </div>

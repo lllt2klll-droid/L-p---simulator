@@ -28,6 +28,25 @@ export class UIManager {
 
   setupPresets() {
     this.presets = {
+      tan: {
+        diameter: 3.2,
+        width: 1.8,
+        rimRatio: 0.58,
+        rubberColor: '#282a2e',
+        rimColor: '#3a3e46',
+        eyeColor: '#4ea8de',
+        noseSmileColor: '#ff733b',
+        letterColor: '#ffd166',
+        roughness: 0.65,
+        metalness: 0.05,
+        treadPattern: 'chevron',
+        rimStyle: 'face',
+        faceEnabled: true,
+        gyroFace: false,
+        hasSidewallRings: true,
+        showTanText: true,
+        antennaStyle: 'crown'
+      },
       buddy: {
         diameter: 3.2,
         width: 1.8,
@@ -36,12 +55,15 @@ export class UIManager {
         rimColor: '#3c4048',
         eyeColor: '#4ea8de',
         noseSmileColor: '#ff733b',
+        letterColor: '#ffd166',
         roughness: 0.65,
         metalness: 0.05,
         treadPattern: 'chevron',
         rimStyle: 'face',
         faceEnabled: true,
         gyroFace: false,
+        hasSidewallRings: true,
+        showTanText: true,
         antennaStyle: 'none'
       },
       monster: {
@@ -314,6 +336,16 @@ export class UIManager {
       });
     }
 
+    const toggleTanText = document.getElementById('toggle-tan-text');
+    if (toggleTanText) {
+      toggleTanText.addEventListener('change', (e) => {
+        sound.playClick();
+        this.tire.updateCustomization({ showTanText: e.target.checked });
+      });
+    }
+
+    this.bindColorPicker('color-letter', (c) => this.tire.updateCustomization({ letterColor: c }));
+
     // Antenna options
     document.querySelectorAll('[data-antenna]').forEach(card => {
       card.addEventListener('click', () => {
@@ -367,6 +399,12 @@ export class UIManager {
     setVal('color-rubber', preset.rubberColor);
     setVal('color-rim', preset.rimColor);
     setVal('color-accent', preset.noseSmileColor);
+    if (preset.letterColor) setVal('color-letter', preset.letterColor);
+
+    const toggleTanEl = document.getElementById('toggle-tan-text');
+    if (toggleTanEl && preset.showTanText !== undefined) {
+      toggleTanEl.checked = preset.showTanText;
+    }
 
     document.querySelectorAll('[data-tread]').forEach(c => {
       c.classList.toggle('selected', c.dataset.tread === preset.treadPattern);
@@ -374,6 +412,10 @@ export class UIManager {
 
     document.querySelectorAll('[data-rim]').forEach(c => {
       c.classList.toggle('selected', c.dataset.rim === preset.rimStyle);
+    });
+
+    document.querySelectorAll('[data-antenna]').forEach(c => {
+      c.classList.toggle('selected', c.dataset.antenna === preset.antennaStyle);
     });
   }
 
