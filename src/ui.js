@@ -1,4 +1,5 @@
 import { sound } from './audio.js';
+import { QUESTIONS_DATA } from './questions.js';
 
 export class UIManager {
   constructor(tire, earth, cameraManager, renderer, scene, threeCamera) {
@@ -19,11 +20,19 @@ export class UIManager {
       turbo: false
     };
 
+    // Game Lifecycle State (START -> PLAYING -> QUESTION -> ENDING)
+    this.gameState = 'START';
+    this.currentQuestionIndex = 0;
+    this.userAnswers = []; // Records 'A', 'B', 'C', 'D'
+    this.distanceRolled = 0;
+    this.distanceTarget = 22.0; // Distance in meters to trigger next question
     this.score = 0;
+
     this.setupPresets();
     this.bindDomElements();
     this.bindKeyboard();
     this.bindTouchControls();
+    this.initGameUI();
   }
 
   setupPresets() {
@@ -45,7 +54,9 @@ export class UIManager {
         gyroFace: false,
         hasSidewallRings: true,
         showTanText: true,
-        antennaStyle: 'crown'
+        antennaStyle: 'crown',
+        accessory: 'crown',
+        expression: 'happy'
       },
       buddy: {
         diameter: 3.2,
@@ -64,7 +75,9 @@ export class UIManager {
         gyroFace: false,
         hasSidewallRings: true,
         showTanText: true,
-        antennaStyle: 'none'
+        antennaStyle: 'none',
+        accessory: 'none',
+        expression: 'happy'
       },
       monster: {
         diameter: 3.8,
@@ -74,13 +87,18 @@ export class UIManager {
         rimColor: '#2bd980',
         eyeColor: '#ffe600',
         noseSmileColor: '#2bd980',
+        letterColor: '#2bd980',
         roughness: 0.75,
         metalness: 0.05,
         treadPattern: 'chunky',
         rimStyle: 'star',
         faceEnabled: false,
         gyroFace: false,
-        antennaStyle: 'star'
+        hasSidewallRings: true,
+        showTanText: true,
+        antennaStyle: 'star',
+        accessory: 'none',
+        expression: 'confident'
       },
       bubblegum: {
         diameter: 3.0,
@@ -90,13 +108,18 @@ export class UIManager {
         rimColor: '#f8a5c2',
         eyeColor: '#63cdda',
         noseSmileColor: '#f3a683',
+        letterColor: '#ffffff',
         roughness: 0.45,
         metalness: 0.02,
         treadPattern: 'heart',
         rimStyle: 'face',
         faceEnabled: true,
         gyroFace: false,
-        antennaStyle: 'heart'
+        hasSidewallRings: true,
+        showTanText: true,
+        antennaStyle: 'bow',
+        accessory: 'bow',
+        expression: 'wink'
       },
       golden: {
         diameter: 3.4,
@@ -106,13 +129,18 @@ export class UIManager {
         rimColor: '#ffd700',
         eyeColor: '#ffffff',
         noseSmileColor: '#ffcc00',
+        letterColor: '#ffd700',
         roughness: 0.25,
         metalness: 0.6,
         treadPattern: 'chevron',
         rimStyle: 'spokes',
         faceEnabled: false,
         gyroFace: false,
-        antennaStyle: 'none'
+        hasSidewallRings: true,
+        showTanText: true,
+        antennaStyle: 'crown',
+        accessory: 'crown',
+        expression: 'confident'
       },
       tractor: {
         diameter: 3.6,
@@ -122,35 +150,53 @@ export class UIManager {
         rimColor: '#ff9f1a',
         eyeColor: '#ffffff',
         noseSmileColor: '#ff9f1a',
+        letterColor: '#ff9f1a',
         roughness: 0.8,
         metalness: 0.05,
         treadPattern: 'paddle',
         rimStyle: 'star',
         faceEnabled: false,
         gyroFace: false,
-        antennaStyle: 'none'
-      },
-      mint: {
-        diameter: 3.1,
-        width: 1.7,
-        rimRatio: 0.58,
-        rubberColor: '#70a1ff',
-        rimColor: '#ffffff',
-        eyeColor: '#2ed573',
-        noseSmileColor: '#ff4757',
-        roughness: 0.5,
-        metalness: 0.1,
-        treadPattern: 'chevron',
-        rimStyle: 'swirl',
-        faceEnabled: false,
-        gyroFace: false,
-        antennaStyle: 'star'
+        hasSidewallRings: true,
+        showTanText: false,
+        antennaStyle: 'scarf',
+        accessory: 'scarf',
+        expression: 'happy'
       }
     };
   }
 
+  initGameUI() {
+    const startScreen = document.getElementById('start-screen');
+    if (startScreen) startScreen.style.display = 'flex';
+
+    const journeyHud = document.getElementById('journey-hud');
+    if (journeyHud) journeyHud.style.display = 'none';
+
+    const kbdGuide = document.getElementById('keyboard-guide');
+    if (kbdGuide) kbdGuide.style.display = 'none';
+  }
+
   bindDomElements() {
-    // Customizer toggle
+    // 1. START SCREEN BUTTONS
+    const btnStart = document.getElementById('btn-start-game');
+    if (btnStart) {
+      btnStart.addEventListener('click', () => {
+        sound.playClick();
+        this.startGame();
+      });
+    }
+
+    const btnCustomizerStart = document.getElementById('btn-open-customizer-start');
+    if (btnCustomizerStart) {
+      btnCustomizerStart.addEventListener('click', () => {
+        sound.playClick();
+        const panel = document.getElementById('customizer-panel');
+        if (panel) panel.classList.remove('hidden');
+      });
+    }
+
+    // 2. CUSTOMIZER TOGGLE & CLOSE
     const toggleBtn = document.getElementById('btn-toggle-customizer');
     const panel = document.getElementById('customizer-panel');
     const closeBtn = document.getElementById('btn-close-panel');
@@ -163,19 +209,17 @@ export class UIManager {
     if (toggleBtn) toggleBtn.addEventListener('click', togglePanel);
     if (closeBtn) closeBtn.addEventListener('click', () => panel.classList.add('hidden'));
 
-    // Camera buttons (Desktop individual buttons & Mobile cycle button)
+    // 3. TOP BAR CAMERA & UTILITY BUTTONS
     const camBtns = document.querySelectorAll('[data-cam-mode]');
     camBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         sound.playClick();
         camBtns.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        const mode = btn.dataset.camMode;
-        this.cameraManager.setMode(mode);
+        this.cameraManager.setMode(btn.dataset.camMode);
       });
     });
 
-    // Mobile single Camera cycle button
     const camCycleBtn = document.getElementById('btn-cam-cycle');
     if (camCycleBtn) {
       camCycleBtn.addEventListener('click', () => {
@@ -184,7 +228,6 @@ export class UIManager {
       });
     }
 
-    // Sound mute button
     const soundBtn = document.getElementById('btn-sound');
     if (soundBtn) {
       soundBtn.addEventListener('click', () => {
@@ -193,7 +236,6 @@ export class UIManager {
       });
     }
 
-    // Reset button
     const resetBtn = document.getElementById('btn-reset');
     if (resetBtn) {
       resetBtn.addEventListener('click', () => {
@@ -202,7 +244,6 @@ export class UIManager {
       });
     }
 
-    // Clear Cache & Update Version button
     const clearCacheBtn = document.getElementById('btn-clear-cache');
     if (clearCacheBtn) {
       clearCacheBtn.addEventListener('click', () => {
@@ -210,7 +251,6 @@ export class UIManager {
       });
     }
 
-    // Screenshot button
     const snapBtn = document.getElementById('btn-screenshot');
     if (snapBtn) {
       snapBtn.addEventListener('click', () => {
@@ -219,7 +259,6 @@ export class UIManager {
       });
     }
 
-    // Help modal
     const helpBtn = document.getElementById('btn-help');
     const helpModal = document.getElementById('help-modal');
     const helpClose = document.getElementById('btn-close-help');
@@ -236,7 +275,41 @@ export class UIManager {
       });
     }
 
-    // Tab buttons
+    // 4. QUESTION MODAL CONTROLS
+    const btnOpenQuestionNow = document.getElementById('btn-open-question-now');
+    if (btnOpenQuestionNow) {
+      btnOpenQuestionNow.addEventListener('click', () => {
+        sound.playClick();
+        this.openQuestion(this.currentQuestionIndex);
+      });
+    }
+
+    const btnNextQuestion = document.getElementById('btn-next-question');
+    if (btnNextQuestion) {
+      btnNextQuestion.addEventListener('click', () => {
+        sound.playClick();
+        this.advanceToNextQuestion();
+      });
+    }
+
+    // 5. ENDING MODAL CONTROLS
+    const btnReplay = document.getElementById('btn-replay');
+    if (btnReplay) {
+      btnReplay.addEventListener('click', () => {
+        sound.playClick();
+        this.restartGame();
+      });
+    }
+
+    const btnSnapEnding = document.getElementById('btn-snap-ending');
+    if (btnSnapEnding) {
+      btnSnapEnding.addEventListener('click', () => {
+        sound.playCollect();
+        this.takeScreenshot();
+      });
+    }
+
+    // 6. CUSTOMIZER TABS & OPTIONS
     const tabBtns = document.querySelectorAll('.tab-btn');
     const tabSections = document.querySelectorAll('.tab-content');
     tabBtns.forEach(btn => {
@@ -251,7 +324,6 @@ export class UIManager {
       });
     });
 
-    // Preset buttons
     const presetChips = document.querySelectorAll('.preset-chip');
     presetChips.forEach(chip => {
       chip.addEventListener('click', () => {
@@ -263,48 +335,58 @@ export class UIManager {
       });
     });
 
-    // Tread option cards
-    const treadCards = document.querySelectorAll('[data-tread]');
-    treadCards.forEach(card => {
+    document.querySelectorAll('[data-tread]').forEach(card => {
       card.addEventListener('click', () => {
         sound.playClick();
-        treadCards.forEach(c => c.classList.remove('selected'));
+        document.querySelectorAll('[data-tread]').forEach(c => c.classList.remove('selected'));
         card.classList.add('selected');
         this.tire.updateCustomization({ treadPattern: card.dataset.tread });
       });
     });
 
-    // Rim option cards
-    const rimCards = document.querySelectorAll('[data-rim]');
-    rimCards.forEach(card => {
+    document.querySelectorAll('[data-rim]').forEach(card => {
       card.addEventListener('click', () => {
         sound.playClick();
-        rimCards.forEach(c => c.classList.remove('selected'));
+        document.querySelectorAll('[data-rim]').forEach(c => c.classList.remove('selected'));
         card.classList.add('selected');
         this.tire.updateCustomization({ rimStyle: card.dataset.rim });
       });
     });
 
-    // Dimension sliders
+    document.querySelectorAll('[data-antenna]').forEach(card => {
+      card.addEventListener('click', () => {
+        sound.playClick();
+        document.querySelectorAll('[data-antenna]').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        const style = card.dataset.antenna;
+        this.tire.updateCustomization({ antennaStyle: style, accessory: style });
+      });
+    });
+
+    document.querySelectorAll('[data-expression]').forEach(card => {
+      card.addEventListener('click', () => {
+        sound.playClick();
+        document.querySelectorAll('[data-expression]').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        this.tire.updateCustomization({ expression: card.dataset.expression });
+      });
+    });
+
     this.bindSlider('slider-diameter', 'val-diameter', (v) => {
       this.tire.updateCustomization({ diameter: parseFloat(v) });
     });
     this.bindSlider('slider-width', 'val-width', (v) => {
       this.tire.updateCustomization({ width: parseFloat(v) });
     });
-    this.bindSlider('slider-rim-ratio', 'val-rim-ratio', (v) => {
-      this.tire.updateCustomization({ rimRatio: parseFloat(v) });
-    });
     this.bindSlider('slider-roughness', 'val-roughness', (v) => {
       this.tire.updateCustomization({ roughness: parseFloat(v) });
     });
 
-    // Color Pickers
     this.bindColorPicker('color-rubber', (c) => this.tire.updateCustomization({ rubberColor: c }));
     this.bindColorPicker('color-rim', (c) => this.tire.updateCustomization({ rimColor: c }));
     this.bindColorPicker('color-accent', (c) => this.tire.updateCustomization({ noseSmileColor: c, eyeColor: c }));
+    this.bindColorPicker('color-letter', (c) => this.tire.updateCustomization({ letterColor: c }));
 
-    // Swatches
     document.querySelectorAll('.swatch[data-target]').forEach(swatch => {
       swatch.addEventListener('click', () => {
         sound.playClick();
@@ -316,15 +398,15 @@ export class UIManager {
         if (target === 'color-rubber') this.tire.updateCustomization({ rubberColor: col });
         else if (target === 'color-rim') this.tire.updateCustomization({ rimColor: col });
         else if (target === 'color-accent') this.tire.updateCustomization({ noseSmileColor: col });
+        else if (target === 'color-letter') this.tire.updateCustomization({ letterColor: col });
       });
     });
 
-    // Toggles
-    const toggleSidewall = document.getElementById('toggle-sidewall');
-    if (toggleSidewall) {
-      toggleSidewall.addEventListener('change', (e) => {
+    const toggleTanText = document.getElementById('toggle-tan-text');
+    if (toggleTanText) {
+      toggleTanText.addEventListener('change', (e) => {
         sound.playClick();
-        this.tire.updateCustomization({ hasSidewallRings: e.target.checked });
+        this.tire.updateCustomization({ showTanText: e.target.checked });
       });
     }
 
@@ -343,26 +425,238 @@ export class UIManager {
         this.earth.setFaceVisible(e.target.checked);
       });
     }
+  }
 
-    const toggleTanText = document.getElementById('toggle-tan-text');
-    if (toggleTanText) {
-      toggleTanText.addEventListener('change', (e) => {
-        sound.playClick();
-        this.tire.updateCustomization({ showTanText: e.target.checked });
+  startGame() {
+    this.gameState = 'PLAYING';
+    const startScreen = document.getElementById('start-screen');
+    if (startScreen) startScreen.style.display = 'none';
+
+    const journeyHud = document.getElementById('journey-hud');
+    if (journeyHud) journeyHud.style.display = 'flex';
+
+    const kbdGuide = document.getElementById('keyboard-guide');
+    if (kbdGuide && window.innerWidth >= 820) kbdGuide.style.display = 'flex';
+
+    this.currentQuestionIndex = 0;
+    this.userAnswers = [];
+    this.distanceRolled = 0;
+    this.updateJourneyHUD();
+
+    this.cameraManager.setMode('follow');
+    sound.playJump();
+  }
+
+  openQuestion(index) {
+    if (index >= QUESTIONS_DATA.length) {
+      this.showEnding();
+      return;
+    }
+
+    this.gameState = 'QUESTION';
+    this.tire.linearSpeed = 0;
+
+    const modal = document.getElementById('question-modal');
+    const badge = document.getElementById('q-station-badge');
+    const title = document.getElementById('q-text');
+    const optionsContainer = document.getElementById('q-options');
+    const feedbackBox = document.getElementById('q-feedback-box');
+    const btnNext = document.getElementById('btn-next-question');
+
+    const q = QUESTIONS_DATA[index];
+    if (badge) badge.textContent = `Trạm Dừng #${q.id}/10 🛞`;
+    if (title) title.textContent = `Câu ${q.id}. ${q.question}`;
+
+    if (feedbackBox) feedbackBox.style.display = 'none';
+    if (btnNext) btnNext.style.display = 'none';
+
+    // Populate Options A, B, C, D
+    if (optionsContainer) {
+      optionsContainer.innerHTML = '';
+      q.options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'q-opt-btn';
+        btn.innerHTML = `<span class="opt-key">${opt.key}</span> <span class="opt-text">${opt.text}</span>`;
+        btn.addEventListener('click', () => {
+          this.selectAnswer(q, opt.key, btn);
+        });
+        optionsContainer.appendChild(btn);
       });
     }
 
-    this.bindColorPicker('color-letter', (c) => this.tire.updateCustomization({ letterColor: c }));
+    if (modal) modal.classList.add('open');
+    sound.playCollect();
+    if (navigator.vibrate) try { navigator.vibrate(25); } catch (e) {}
+  }
 
-    // Antenna options
-    document.querySelectorAll('[data-antenna]').forEach(card => {
-      card.addEventListener('click', () => {
-        sound.playClick();
-        document.querySelectorAll('[data-antenna]').forEach(c => c.classList.remove('selected'));
-        card.classList.add('selected');
-        this.tire.updateCustomization({ antennaStyle: card.dataset.antenna });
-      });
+  selectAnswer(q, selectedKey, btnElement) {
+    sound.playClick();
+    if (navigator.vibrate) try { navigator.vibrate(15); } catch (e) {}
+
+    // Highlight selected button
+    document.querySelectorAll('.q-opt-btn').forEach(b => b.classList.remove('selected'));
+    btnElement.classList.add('selected');
+
+    // Record answer
+    this.userAnswers[this.currentQuestionIndex] = selectedKey;
+
+    // Show witty response
+    const feedbackBox = document.getElementById('q-feedback-box');
+    const feedbackText = document.getElementById('q-feedback-text');
+    const btnNext = document.getElementById('btn-next-question');
+
+    if (feedbackBox && feedbackText) {
+      feedbackText.textContent = q.responses[selectedKey];
+      feedbackBox.style.display = 'block';
+    }
+
+    if (btnNext) {
+      btnNext.style.display = 'inline-flex';
+      btnNext.innerHTML = (this.currentQuestionIndex === QUESTIONS_DATA.length - 1)
+        ? '<span>👑</span> XEM KẾT THÚC HÀNH TRÌNH'
+        : '<span>✨</span> TIẾP TỤC LĂN BÁNH';
+    }
+  }
+
+  advanceToNextQuestion() {
+    const modal = document.getElementById('question-modal');
+    if (modal) modal.classList.remove('open');
+
+    this.currentQuestionIndex++;
+    this.distanceRolled = 0;
+
+    if (this.currentQuestionIndex >= QUESTIONS_DATA.length) {
+      this.showEnding();
+    } else {
+      this.gameState = 'PLAYING';
+      this.updateJourneyHUD();
+    }
+  }
+
+  updateJourneyHUD() {
+    const textEl = document.getElementById('progress-question-text');
+    const fillEl = document.getElementById('progress-bar-fill');
+    if (textEl) {
+      textEl.textContent = `Câu ${this.currentQuestionIndex + 1}/10`;
+    }
+    if (fillEl) {
+      const pct = Math.min(100, Math.round(((this.currentQuestionIndex) / 10) * 100));
+      fillEl.style.width = `${Math.max(10, pct)}%`;
+    }
+  }
+
+  showEnding() {
+    this.gameState = 'ENDING';
+    this.tire.linearSpeed = 0;
+
+    const modal = document.getElementById('ending-modal');
+    const badge = document.getElementById('ending-badge');
+    const title = document.getElementById('ending-title');
+    const quote = document.getElementById('ending-quote');
+    const desc = document.getElementById('ending-desc');
+    const summary = document.getElementById('stat-answers-summary');
+    const titleStat = document.getElementById('stat-title');
+    const cContainer = document.getElementById('c-particles-container');
+
+    // Strict Evaluation Order from PLAN.md Section 9:
+    // 1. Condition B (Highest Priority): All 10 answers are 'C'
+    const isAllC = this.userAnswers.length === 10 && this.userAnswers.every(ans => ans === 'C');
+
+    // 2. Condition A: >= 6 superOption answers
+    let superCount = 0;
+    this.userAnswers.forEach((ans, idx) => {
+      if (QUESTIONS_DATA[idx] && ans === QUESTIONS_DATA[idx].superOption) {
+        superCount++;
+      }
     });
+    const isSuperTire = superCount >= 6;
+
+    if (summary) {
+      summary.textContent = this.userAnswers.join(' - ');
+    }
+
+    if (cContainer) cContainer.innerHTML = '';
+
+    if (isAllC) {
+      // Ending B — CHỌN TOÀN C
+      if (badge) badge.textContent = '🌟 KẾT THÚC BÍ MẬT';
+      if (title) title.textContent = 'THÁNH CHỌN C';
+      if (quote) quote.textContent = '“Bạn không cần đáp án đúng. Bạn chỉ cần đáp án C.”';
+      if (desc) desc.textContent = 'Đỉnh cao của sự kiên định! Dù cuộc đời có ra đề trắc nghiệm oái oăm thế nào, tôn chỉ của bạn là: Cứ C Là Chọn!';
+      if (titleStat) titleStat.textContent = 'Thánh C Bất Chấp Lý Lẽ';
+
+      // Flying 'C' characters around the screen
+      this.spawnFloatingCParticles();
+      sound.playCollect();
+
+    } else if (isSuperTire) {
+      // Ending A — SIÊU LỐP
+      if (badge) badge.textContent = '🏆 KẾT THÚC SIÊU CẤP';
+      if (title) title.textContent = 'SIÊU LỐP BẤT DIỆT';
+      if (quote) quote.textContent = '“Không phải ai cũng xứng đáng với áp suất của bạn!”';
+      if (desc) desc.textContent = `Bạn đã chọn ${superCount}/10 câu trả lời siêu lốp bản lĩnh! Sức chịu đựng và độ dày cao su của bạn đã đạt đẳng cấp vô địch thiên hạ!`;
+      if (titleStat) titleStat.textContent = 'Siêu Lốp Bọc Thép Hạng Nhất';
+
+      this.tire.updateCustomization({ antennaStyle: 'crown', accessory: 'crown' });
+      sound.playCollect();
+
+    } else {
+      // Ending C — THỨC TỈNH (Default fallback)
+      if (badge) badge.textContent = '✨ KẾT THÚC THỨC TỈNH';
+      if (title) title.textContent = 'THỨC TỈNH RỰC RỠ';
+      if (quote) quote.textContent = '“Bạn không phải lốp dự phòng của cuộc đời ai cả. Hãy tự lăn con đường của mình!”';
+      if (desc) desc.textContent = 'Đã đến lúc đóng nắp cốp xe lại, gạt bỏ quá khứ sơ-cua và tự tin lăn bánh tự do dưới ánh mặt trời rạng rỡ!';
+      if (titleStat) titleStat.textContent = 'Lốp Xe Tự Do & Bản Lĩnh';
+
+      this.tire.updateCustomization({ antennaStyle: 'glasses', accessory: 'glasses', expression: 'confident' });
+      sound.playJump();
+    }
+
+    if (modal) modal.classList.add('open');
+  }
+
+  spawnFloatingCParticles() {
+    const container = document.getElementById('c-particles-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    for (let i = 0; i < 35; i++) {
+      const c = document.createElement('div');
+      c.className = 'floating-c-letter';
+      c.textContent = 'C';
+      c.style.left = `${Math.random() * 95}vw`;
+      c.style.top = `${Math.random() * 95}vh`;
+      c.style.animationDelay = `${Math.random() * 2}s`;
+      c.style.fontSize = `${24 + Math.random() * 38}px`;
+      container.appendChild(c);
+    }
+  }
+
+  restartGame() {
+    const endingModal = document.getElementById('ending-modal');
+    if (endingModal) endingModal.classList.remove('open');
+
+    const cContainer = document.getElementById('c-particles-container');
+    if (cContainer) cContainer.innerHTML = '';
+
+    this.currentQuestionIndex = 0;
+    this.userAnswers = [];
+    this.distanceRolled = 0;
+    this.tire.resetPosition();
+
+    // Return to start screen
+    this.gameState = 'START';
+    this.initGameUI();
+  }
+
+  updateGameProgress(deltaDist) {
+    if (this.gameState !== 'PLAYING') return;
+
+    this.distanceRolled += Math.abs(deltaDist);
+    if (this.distanceRolled >= this.distanceTarget) {
+      this.distanceRolled = 0;
+      this.openQuestion(this.currentQuestionIndex);
+    }
   }
 
   bindSlider(id, labelId, onChange) {
@@ -399,8 +693,6 @@ export class UIManager {
     setLbl('val-diameter', preset.diameter);
     setVal('slider-width', preset.width);
     setLbl('val-width', preset.width);
-    setVal('slider-rim-ratio', preset.rimRatio);
-    setLbl('val-rim-ratio', preset.rimRatio);
     setVal('slider-roughness', preset.roughness);
     setLbl('val-roughness', preset.roughness);
 
@@ -425,11 +717,18 @@ export class UIManager {
     document.querySelectorAll('[data-antenna]').forEach(c => {
       c.classList.toggle('selected', c.dataset.antenna === preset.antennaStyle);
     });
+
+    document.querySelectorAll('[data-expression]').forEach(c => {
+      c.classList.toggle('selected', c.dataset.expression === (preset.expression || 'happy'));
+    });
   }
 
   bindKeyboard() {
     window.addEventListener('keydown', (e) => {
       sound.ensureContext();
+      if (this.gameState === 'QUESTION' || this.gameState === 'START' || this.gameState === 'ENDING') {
+        return; // Don't move tire while modal is open
+      }
       switch (e.code) {
         case 'KeyW':
         case 'ArrowUp':
@@ -497,7 +796,6 @@ export class UIManager {
   }
 
   bindTouchControls() {
-    // 1. Virtual Analog Joystick
     const zone = document.getElementById('joystick-zone');
     const base = document.getElementById('joystick-base');
     const knob = document.getElementById('joystick-knob');
@@ -506,9 +804,10 @@ export class UIManager {
       let activePointerId = null;
       let startX = 0;
       let startY = 0;
-      const maxRadius = 45; // max displacement in pixels
+      const maxRadius = 45;
 
       const onPointerDown = (e) => {
+        if (this.gameState === 'QUESTION' || this.gameState === 'START' || this.gameState === 'ENDING') return;
         if (activePointerId !== null) return;
         activePointerId = e.pointerId;
         zone.setPointerCapture(e.pointerId);
@@ -535,12 +834,9 @@ export class UIManager {
           clampedY = (dy / dist) * maxRadius;
         }
 
-        // Visual position
         knob.style.transform = `translate(${clampedX}px, ${clampedY}px)`;
 
-        // Calculate normalized analog axes:
-        // dy < 0 means dragging up -> forward
-        // dx < 0 means dragging left -> steer left
+        // Analog input:
         this.input.driveAxis = -clampedY / maxRadius;
         this.input.steerAxis = -clampedX / maxRadius;
       };
@@ -550,7 +846,6 @@ export class UIManager {
         try { zone.releasePointerCapture(e.pointerId); } catch (err) {}
         activePointerId = null;
 
-        // Reset
         knob.style.transform = 'translate(0px, 0px)';
         this.input.driveAxis = 0;
         this.input.steerAxis = 0;
@@ -562,13 +857,12 @@ export class UIManager {
       zone.addEventListener('pointercancel', onPointerUp);
     }
 
-    // 2. Action buttons (Jump, Turbo, Honk)
     const jumpBtn = document.getElementById('touch-jump');
     if (jumpBtn) {
       jumpBtn.addEventListener('pointerdown', (e) => {
         e.preventDefault();
         sound.ensureContext();
-        if (this.tire.jump()) {
+        if (this.gameState === 'PLAYING' && this.tire.jump()) {
           sound.playJump();
           if (navigator.vibrate) try { navigator.vibrate(22); } catch (err) {}
         }
@@ -612,11 +906,9 @@ export class UIManager {
     const nextMode = modes[(currentIdx + 1) % modes.length];
     this.cameraManager.setMode(nextMode);
 
-    // Update desktop camera buttons
     const camBtns = document.querySelectorAll('[data-cam-mode]');
     camBtns.forEach(b => b.classList.toggle('active', b.dataset.camMode === nextMode));
 
-    // Update mobile camera cycle button text/icon
     const mobileCam = document.getElementById('btn-cam-cycle');
     if (mobileCam) {
       const labels = {
@@ -634,7 +926,6 @@ export class UIManager {
       try { navigator.vibrate([30, 40, 50]); } catch (e) {}
     }
 
-    // Show toast message
     const toast = document.getElementById('toast-notify');
     const toastText = document.getElementById('toast-text');
     if (toast && toastText) {
@@ -643,19 +934,14 @@ export class UIManager {
     }
 
     try {
-      // 1. Delete all browser caches in CacheStorage API
       if ('caches' in window) {
         const cacheNames = await caches.keys();
         await Promise.all(cacheNames.map(name => caches.delete(name)));
       }
-
-      // 2. Unregister any active service workers
       if ('serviceWorker' in navigator) {
         const registrations = await navigator.serviceWorker.getRegistrations();
         await Promise.all(registrations.map(reg => reg.unregister()));
       }
-
-      // 3. Clear local & session storage
       try {
         localStorage.clear();
         sessionStorage.clear();
@@ -664,7 +950,6 @@ export class UIManager {
       console.warn('Error during cache clear:', err);
     }
 
-    // 4. Force hard reload with timestamp query param to bypass CDN/browser cache
     setTimeout(() => {
       const cleanUrl = window.location.origin + window.location.pathname;
       window.location.replace(`${cleanUrl}?v=${Date.now()}`);
@@ -676,25 +961,7 @@ export class UIManager {
     const dataURL = this.renderer.domElement.toDataURL('image/png');
     const a = document.createElement('a');
     a.href = dataURL;
-    a.download = `cute-tire-earth-${Date.now()}.png`;
+    a.download = `lop-si-tinh-${Date.now()}.png`;
     a.click();
-  }
-
-  addScore(pts = 1) {
-    this.score += pts;
-    const scoreEl = document.getElementById('hud-score');
-    if (scoreEl) {
-      scoreEl.textContent = this.score;
-      scoreEl.style.transform = 'scale(1.3)';
-      setTimeout(() => scoreEl.style.transform = 'scale(1.0)', 180);
-    }
-  }
-
-  updateHUD(speedRatio) {
-    const speedEl = document.getElementById('hud-speed');
-    if (speedEl) {
-      const kmh = Math.round(Math.abs(speedRatio) * 45);
-      speedEl.textContent = `${kmh} km/h`;
-    }
   }
 }

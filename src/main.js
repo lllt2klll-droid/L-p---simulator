@@ -83,8 +83,17 @@ class CuteTireApp {
     // 1. Update tire motion & spherical physics
     const tireMotion = this.tire.update(dt, this.ui.input);
 
+    // Update Game Progress (Questions & Journey)
+    if (this.ui.gameState === 'PLAYING') {
+      this.ui.updateGameProgress(tireMotion.deltaDist);
+    } else if (this.ui.gameState === 'START') {
+      // Gentle idle spin at start screen
+      this.tire.rollAngle += dt * 0.4;
+      this.tire.rollPivot.rotation.x = this.tire.rollAngle;
+    }
+
     // 2. Sound updates
-    sound.updateRolling(tireMotion.speedRatio);
+    sound.updateRolling(this.ui.gameState === 'PLAYING' ? tireMotion.speedRatio : 0);
 
     // 3. Particle emission from contact patch
     const absSpeed = Math.abs(tireMotion.speedRatio);

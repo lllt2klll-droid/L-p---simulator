@@ -23,7 +23,9 @@ export class StandaloneTire {
       gyroFace: false,           // whether face stays upright or tumbles with tire
       hasSidewallRings: true,
       showTanText: true,         // Show 3D raised "TÂN" lettering
-      antennaStyle: 'crown'      // none, crown, star, heart
+      antennaStyle: 'crown',     // none, crown, star, heart, bow, glasses, scarf
+      accessory: 'crown',        // none, crown, glasses, bow, scarf
+      expression: 'happy'        // happy, confident, wink
     };
 
     // Dimensions
@@ -603,19 +605,34 @@ export class StandaloneTire {
       const eyeSpacingZ = rimR * 0.32;
       const eyeHeightY = rimR * 0.28;
 
+      // Eyes: Pill / Capsule geometry (blue clay) or Wink
+      const isWink = this.params.expression === 'wink';
+
       // Front Eye (+Z)
-      const eye1 = new THREE.Mesh(eyeGeo, this.eyeMaterial);
-      eye1.castShadow = true;
-      eye1.position.set(rimR * 0.08, eyeHeightY, eyeSpacingZ);
-      faceSide.add(eye1);
+      if (isWink) {
+        // Arched wink curve
+        const winkCurve = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(rimR * 0.08, eyeHeightY + eyeScale * 0.2, eyeSpacingZ - eyeScale * 0.4),
+          new THREE.Vector3(rimR * 0.10, eyeHeightY - eyeScale * 0.1, eyeSpacingZ),
+          new THREE.Vector3(rimR * 0.08, eyeHeightY + eyeScale * 0.2, eyeSpacingZ + eyeScale * 0.4)
+        ]);
+        const winkGeo = new THREE.TubeGeometry(winkCurve, 16, eyeScale * 0.14, 8, false);
+        const winkMesh = new THREE.Mesh(winkGeo, this.pupilMaterial);
+        faceSide.add(winkMesh);
+      } else {
+        const eye1 = new THREE.Mesh(eyeGeo, this.eyeMaterial);
+        eye1.castShadow = true;
+        eye1.position.set(rimR * 0.08, eyeHeightY, eyeSpacingZ);
+        faceSide.add(eye1);
 
-      const pupil1 = new THREE.Mesh(pupilGeo, this.pupilMaterial);
-      pupil1.position.set(eyeScale * 0.22, 0, 0);
-      eye1.add(pupil1);
+        const pupil1 = new THREE.Mesh(pupilGeo, this.pupilMaterial);
+        pupil1.position.set(eyeScale * 0.22, 0, 0);
+        eye1.add(pupil1);
 
-      const hl1 = new THREE.Mesh(hlGeo, hlMat);
-      hl1.position.set(eyeScale * 0.3, eyeScale * 0.12, eyeScale * 0.08);
-      eye1.add(hl1);
+        const hl1 = new THREE.Mesh(hlGeo, hlMat);
+        hl1.position.set(eyeScale * 0.3, eyeScale * 0.12, eyeScale * 0.08);
+        eye1.add(hl1);
+      }
 
       // Back Eye (-Z)
       const eye2 = new THREE.Mesh(eyeGeo, this.eyeMaterial);
@@ -630,6 +647,28 @@ export class StandaloneTire {
       const hl2 = new THREE.Mesh(hlGeo, hlMat);
       hl2.position.set(eyeScale * 0.3, eyeScale * 0.12, -eyeScale * 0.08);
       eye2.add(hl2);
+
+      // Glasses accessory if selected
+      if (this.params.accessory === 'glasses') {
+        const glassMat = new THREE.MeshStandardMaterial({ color: 0x181a1f, roughness: 0.15, metalness: 0.3 });
+        const gGroup = new THREE.Group();
+        gGroup.position.set(rimR * 0.12, eyeHeightY, 0);
+
+        const lensGeo = new THREE.BoxGeometry(rimR * 0.06, eyeScale * 1.15, eyeScale * 1.05);
+        const l1 = new THREE.Mesh(lensGeo, glassMat);
+        l1.position.z = eyeSpacingZ;
+        gGroup.add(l1);
+
+        const l2 = new THREE.Mesh(lensGeo, glassMat);
+        l2.position.z = -eyeSpacingZ;
+        gGroup.add(l2);
+
+        const bridgeGeo = new THREE.BoxGeometry(rimR * 0.06, eyeScale * 0.2, eyeSpacingZ * 0.9);
+        const bridge = new THREE.Mesh(bridgeGeo, glassMat);
+        gGroup.add(bridge);
+
+        faceSide.add(gGroup);
+      }
 
       // Cute Blushing Cheeks (pink clay)
       const blushGeo = new THREE.SphereGeometry(rimR * 0.14, 14, 10);
@@ -736,6 +775,49 @@ export class StandaloneTire {
       const topper = new THREE.Mesh(topperGeo, this.accentMaterial);
       topper.position.set(0, outerR + 1.35, 0);
       this.antennaGroup.add(topper);
+
+    } else if (style === 'bow') {
+      // Cute pink ribbon bow
+      const bowGroup = new THREE.Group();
+      bowGroup.position.set(0, outerR + 0.35, 0);
+      const bowMat = new THREE.MeshStandardMaterial({ color: 0xff6b8b, roughness: 0.4 });
+      const wingGeo = new THREE.ConeGeometry(outerR * 0.16, outerR * 0.28, 12);
+      wingGeo.rotateZ(Math.PI / 2);
+
+      const leftWing = new THREE.Mesh(wingGeo, bowMat);
+      leftWing.position.x = -outerR * 0.14;
+      bowGroup.add(leftWing);
+
+      const rightWing = new THREE.Mesh(wingGeo, bowMat);
+      rightWing.rotation.z = Math.PI;
+      rightWing.position.x = outerR * 0.14;
+      bowGroup.add(rightWing);
+
+      const knotGeo = new THREE.SphereGeometry(outerR * 0.09, 12, 12);
+      const knot = new THREE.Mesh(knotGeo, bowMat);
+      bowGroup.add(knot);
+
+      this.antennaGroup.add(bowGroup);
+
+    } else if (style === 'scarf') {
+      // Cozy warm winter scarf
+      const scarfMat = new THREE.MeshStandardMaterial({ color: 0xe63946, roughness: 0.55 });
+      const scarfGroup = new THREE.Group();
+      scarfGroup.position.set(0, outerR * 0.15, 0);
+
+      const scarfRing = new THREE.TorusGeometry(outerR * 0.52, outerR * 0.1, 14, 32);
+      scarfRing.rotateY(Math.PI / 2);
+      const ringMesh = new THREE.Mesh(scarfRing, scarfMat);
+      scarfGroup.add(ringMesh);
+
+      // Hanging scarf tails
+      const tailGeo = new THREE.BoxGeometry(outerR * 0.14, outerR * 0.45, outerR * 0.08);
+      const tail = new THREE.Mesh(tailGeo, scarfMat);
+      tail.position.set(outerR * 0.48, -outerR * 0.32, 0);
+      tail.rotation.z = -0.25;
+      scarfGroup.add(tail);
+
+      this.antennaGroup.add(scarfGroup);
     }
   }
 
