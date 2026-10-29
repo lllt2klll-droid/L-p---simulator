@@ -956,6 +956,24 @@ export class UIManager {
     }, 500);
   }
 
+  addScore(pts = 1) {
+    this.score += pts;
+    const scoreEl = document.getElementById('hud-score');
+    if (scoreEl) {
+      scoreEl.textContent = this.score;
+      scoreEl.style.transform = 'scale(1.3)';
+      setTimeout(() => { if (scoreEl) scoreEl.style.transform = 'scale(1.0)'; }, 180);
+    }
+  }
+
+  updateHUD(speedRatio) {
+    const speedEl = document.getElementById('hud-speed');
+    if (speedEl) {
+      const kmh = Math.round(Math.abs(speedRatio) * 45);
+      speedEl.textContent = `${kmh} km/h`;
+    }
+  }
+
   takeScreenshot() {
     this.renderer.render(this.scene, this.threeCamera);
     const dataURL = this.renderer.domElement.toDataURL('image/png');
