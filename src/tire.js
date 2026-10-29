@@ -7,9 +7,9 @@ export class StandaloneTire {
 
     // Customization parameters
     this.params = {
-      diameter: 3.2,       // Outer diameter
-      width: 1.8,          // Tire tread width
-      rimRatio: 0.58,      // Rim diameter as fraction of tire diameter
+      diameter: 3.2,          // Outer diameter
+      width: 1.8,             // Tire tread width
+      rimRatio: 0.58,         // Rim diameter as fraction of tire diameter
       rubberColor: '#2b2d31', // Deep charcoal clay rubber like reference
       rimColor: '#3c4048',    // Rim backdrop color
       eyeColor: '#4ea8de',    // Cyan/blue clay eyes like reference
@@ -24,47 +24,49 @@ export class StandaloneTire {
       antennaStyle: 'none'     // none, star, heart
     };
 
-    // Physics / Motion state
+    // Dimensions
     this.radius = this.params.diameter / 2;
     this.centerDist = this.earthRadius + this.radius;
 
-    // Spherical position & orientation frame
-    // P = position on sphere (length = centerDist)
+    // Strict Right-Handed Coordinate System:
+    // right (X = 1, 0, 0), up (Y = 0, 1, 0), forward (Z = 0, 0, 1)
+    // right x up = forward
+    // up x forward = right
+    // forward x right = up
     this.position = new THREE.Vector3(0, this.centerDist, 0); // Start at North Pole
-    this.forward = new THREE.Vector3(0, 0, 1);                 // Tangent forward
-    this.up = new THREE.Vector3(0, 1, 0);                      // Surface normal
-    this.right = new THREE.Vector3(1, 0, 0);                    // Axle vector
+    this.forward = new THREE.Vector3(0, 0, 1);
+    this.up = new THREE.Vector3(0, 1, 0);
+    this.right = new THREE.Vector3(1, 0, 0);
 
     // Dynamics
     this.linearSpeed = 0;
     this.maxSpeed = 16.0;
     this.acceleration = 18.0;
-    this.friction = 7.0;
+    this.friction = 7.5;
     this.steeringAngle = 0;
-    this.steerSpeed = 2.8;
-    this.steerReturnSpeed = 6.0;
+    this.steerSpeed = 2.6;
+    this.steerReturnSpeed = 7.0;
     this.rollAngle = 0;
 
-    // Bounce / Jump dynamics
+    // Jump dynamics (pure position offset, NO mesh deformation)
     this.jumpHeight = 0;
     this.jumpVelocity = 0;
     this.gravity = 35.0;
     this.isGrounded = true;
-    this.squashStretch = new THREE.Vector3(1, 1, 1);
 
-    // Root Three.js hierarchy
+    // Three.js Hierarchy
     this.root = new THREE.Group();
     this.scene.add(this.root);
 
-    // Rolling pivot group: this rotates around the axle X-axis
+    // Roll pivot (rotates strictly around X axle with uniform 1,1,1 scale)
     this.rollPivot = new THREE.Group();
     this.root.add(this.rollPivot);
 
-    // Face group (can either be attached to rollPivot or root depending on gyroFace)
+    // Face group
     this.faceAnchor = new THREE.Group();
     this.rollPivot.add(this.faceAnchor);
 
-    // Antenna anchor (always on root so it stays on top of tire)
+    // Antenna group
     this.antennaGroup = new THREE.Group();
     this.root.add(this.antennaGroup);
 
@@ -78,7 +80,7 @@ export class StandaloneTire {
     this.rimMaterial = new THREE.MeshStandardMaterial({
       color: new THREE.Color(this.params.rimColor),
       roughness: 0.5,
-      metalness: 0.1
+      metalness: 0.08
     });
 
     this.eyeMaterial = new THREE.MeshStandardMaterial({
@@ -104,7 +106,7 @@ export class StandaloneTire {
   }
 
   buildFullTire() {
-    // Clear previous children of rollPivot except faceAnchor
+    // Clear previous geometry children
     while (this.rollPivot.children.length > 0) {
       const child = this.rollPivot.children[0];
       if (child === this.faceAnchor) {
@@ -128,7 +130,7 @@ export class StandaloneTire {
     this.radius = this.params.diameter / 2;
     this.centerDist = this.earthRadius + this.radius;
 
-    // Build the main tire rubber torus/body
+    // Build the main tire rubber torus/body with pristine roundness
     this.buildRubberBody();
 
     // Build raised 3D tread blocks
@@ -152,56 +154,48 @@ export class StandaloneTire {
       this.buildAntenna();
     }
 
-    // Reattach face anchor to rollPivot or root based on gyro mode
+    // Gyro Face attachment
     if (this.params.gyroFace) {
       this.root.add(this.faceAnchor);
     } else {
       this.rollPivot.add(this.faceAnchor);
     }
+
+    // Ensure scale is always strictly uniform (1, 1, 1)
+    this.rollPivot.scale.set(1, 1, 1);
+    this.root.scale.set(1, 1, 1);
   }
 
   buildRubberBody() {
-    // Axle is along Z or X. In our local tire frame:
-    // Forward is +Z, Up is +Y, Axle is +X.
-    // Rolling rotates around +X!
-    // So the tire circular silhouette is in the Y-Z plane!
     const outerR = this.radius;
     const rimR = outerR * this.params.rimRatio;
     const halfW = this.params.width / 2;
 
-    // Create tire cross-section profile for LatheGeometry
-    // Silhouette in Y-Z plane rotated around X axis:
-    // LatheGeometry rotates 2D points (x, y) around Y axis.
-    // So we generate points in (radius, widthOffset) and rotate around width-axis,
-    // then orient the mesh so its cylinder axis aligns with local X axis!
-    const points = [];
-    const segments = 16;
+    // Generate ultra-smooth, plump, rounded toy tire profile
+    // Lathe revolves around Y axis.
+    // In lathe coordinates: X = radius from center, Y = width along axle.
+    const controlPoints = [
+      new THREE.Vector2(rimR, -halfW * 0.70),
+      new THREE.Vector2(rimR * 1.06, -halfW * 0.94),
+      new THREE.Vector2(rimR + (outerR - rimR) * 0.42, -halfW * 1.02),
+      new THREE.Vector2(outerR * 0.92, -halfW * 0.96),
+      new THREE.Vector2(outerR * 0.985, -halfW * 0.55),
+      new THREE.Vector2(outerR, 0),
+      new THREE.Vector2(outerR * 0.985, halfW * 0.55),
+      new THREE.Vector2(outerR * 0.92, halfW * 0.96),
+      new THREE.Vector2(rimR + (outerR - rimR) * 0.42, halfW * 1.02),
+      new THREE.Vector2(rimR * 1.06, halfW * 0.94),
+      new THREE.Vector2(rimR, halfW * 0.70)
+    ];
 
-    // Cross-section curve: from inner rim (rimR, -halfW*0.6) around the outer tread to other rim
-    // Inner bevel at rim left
-    points.push(new THREE.Vector2(rimR, -halfW * 0.7));
-    points.push(new THREE.Vector2(rimR * 1.05, -halfW * 0.95));
+    // Smooth spline interpolation
+    const spline = new THREE.SplineCurve(controlPoints);
+    const profilePoints = spline.getPoints(24);
 
-    // Outer shoulder left
-    points.push(new THREE.Vector2(outerR * 0.88, -halfW * 1.02));
-    points.push(new THREE.Vector2(outerR * 0.98, -halfW * 0.85));
-
-    // Flat beveled crown / tread top
-    points.push(new THREE.Vector2(outerR, -halfW * 0.5));
-    points.push(new THREE.Vector2(outerR * 1.01, 0));
-    points.push(new THREE.Vector2(outerR, halfW * 0.5));
-
-    // Outer shoulder right
-    points.push(new THREE.Vector2(outerR * 0.98, halfW * 0.85));
-    points.push(new THREE.Vector2(outerR * 0.88, halfW * 1.02));
-
-    // Inner bevel at rim right
-    points.push(new THREE.Vector2(rimR * 1.05, halfW * 0.95));
-    points.push(new THREE.Vector2(rimR, halfW * 0.7));
-
-    const latheGeo = new THREE.LatheGeometry(points, 36);
-    // Lathe revolves around Y. We rotate it so axle aligns with local X axis!
+    const latheGeo = new THREE.LatheGeometry(profilePoints, 48);
+    // Align lathe axis (Y) with tire axle (local X axis)
     latheGeo.rotateZ(-Math.PI / 2);
+    latheGeo.computeVertexNormals();
 
     const tireMesh = new THREE.Mesh(latheGeo, this.rubberMaterial);
     tireMesh.castShadow = true;
@@ -217,7 +211,6 @@ export class StandaloneTire {
     const outerR = this.radius;
     const width = this.params.width;
     const numTreads = pattern === 'paddle' ? 18 : 28;
-
     const treadMat = this.rubberMaterial;
 
     for (let i = 0; i < numTreads; i++) {
@@ -225,67 +218,85 @@ export class StandaloneTire {
       const cosA = Math.cos(angle);
       const sinA = Math.sin(angle);
 
-      // Tread position on perimeter: in local Y-Z plane
-      // y = outerR * cosA, z = outerR * sinA
+      // Radial vector in local Y-Z plane
+      const radY = cosA;
+      const radZ = sinA;
+
+      // Tangent vector along perimeter
+      const tanY = -sinA;
+      const tanZ = cosA;
+
       if (pattern === 'chevron') {
-        // V-groove / chevron treads like reference #2!
-        // Left arm of V
-        const armGeo = new THREE.BoxGeometry(width * 0.46, outerR * 0.14, outerR * 0.09);
-        // Bevel / round edges with simple scale
-        const leftArm = new THREE.Mesh(armGeo, treadMat);
-        leftArm.castShadow = true;
+        // V-groove chevron treads like reference #2
+        const armW = width * 0.44;
+        const armH = outerR * 0.085;
+        const armL = outerR * 0.16;
+        const armGeo = new THREE.BoxGeometry(armW, armH, armL);
 
-        leftArm.position.set(-width * 0.22, outerR * 0.995 * cosA, outerR * 0.995 * sinA);
-        leftArm.rotation.x = -angle;
-        leftArm.rotation.y = 0.38; // V angle
-        this.rollPivot.add(leftArm);
+        [-1, 1].forEach(side => {
+          const arm = new THREE.Mesh(armGeo, treadMat);
+          arm.castShadow = true;
 
-        // Right arm of V
-        const rightArm = new THREE.Mesh(armGeo, treadMat);
-        rightArm.castShadow = true;
-        rightArm.position.set(width * 0.22, outerR * 0.995 * cosA, outerR * 0.995 * sinA);
-        rightArm.rotation.x = -angle;
-        rightArm.rotation.y = -0.38; // V angle
-        this.rollPivot.add(rightArm);
+          // Position on perimeter
+          const xPos = side * (width * 0.22);
+          const yPos = outerR * 0.992 * radY;
+          const zPos = outerR * 0.992 * radZ;
+          arm.position.set(xPos, yPos, zPos);
+
+          // Local basis for tread block:
+          // Local Y = radial outward (radY, radZ)
+          // Local Z = perimeter tangent (tanY, tanZ)
+          // Local X = axle direction
+          // Rotate slightly around radial normal for V angle
+          const vAngle = side * 0.40;
+          const rotQ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -angle);
+          const vQ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), vAngle);
+          arm.quaternion.copy(rotQ).multiply(vQ);
+
+          this.rollPivot.add(arm);
+        });
 
       } else if (pattern === 'chunky') {
-        // Chunky off-road rectangular cleat blocks with center stagger
+        // Chunky off-road rectangular cleat blocks
         const isStagger = i % 2 === 0;
         const cleatW = width * 0.38;
-        const cleatGeo = new THREE.BoxGeometry(cleatW, outerR * 0.16, outerR * 0.12);
+        const cleatH = outerR * 0.11;
+        const cleatL = outerR * 0.14;
+        const cleatGeo = new THREE.BoxGeometry(cleatW, cleatH, cleatL);
+
         const cleat = new THREE.Mesh(cleatGeo, treadMat);
         cleat.castShadow = true;
 
         const xOff = isStagger ? -width * 0.22 : width * 0.22;
-        cleat.position.set(xOff, outerR * 0.995 * cosA, outerR * 0.995 * sinA);
-        cleat.rotation.x = -angle;
+        cleat.position.set(xOff, outerR * 0.995 * radY, outerR * 0.995 * radZ);
+        cleat.quaternion.setFromAxisAngle(new THREE.Vector3(1, 0, 0), -angle);
         this.rollPivot.add(cleat);
 
-        // Center mini cleat
-        const centerGeo = new THREE.BoxGeometry(width * 0.2, outerR * 0.12, outerR * 0.1);
+        // Center mini block
+        const centerGeo = new THREE.BoxGeometry(width * 0.22, cleatH * 0.85, cleatL * 0.8);
         const center = new THREE.Mesh(centerGeo, treadMat);
         center.castShadow = true;
-        center.position.set(0, outerR * 0.995 * cosA, outerR * 0.995 * sinA);
-        center.rotation.x = -angle;
+        center.position.set(0, outerR * 0.995 * radY, outerR * 0.995 * radZ);
+        center.quaternion.setFromAxisAngle(new THREE.Vector3(1, 0, 0), -angle);
         this.rollPivot.add(center);
 
       } else if (pattern === 'paddle') {
-        // Deep tractor/dune paddle slats
-        const paddleGeo = new THREE.BoxGeometry(width * 0.88, outerR * 0.15, outerR * 0.14);
+        // Wide paddle slats
+        const paddleGeo = new THREE.BoxGeometry(width * 0.88, outerR * 0.12, outerR * 0.14);
         const paddle = new THREE.Mesh(paddleGeo, treadMat);
         paddle.castShadow = true;
-        paddle.position.set(0, outerR * 1.01 * cosA, outerR * 1.01 * sinA);
-        paddle.rotation.x = -angle;
+        paddle.position.set(0, outerR * 1.005 * radY, outerR * 1.005 * radZ);
+        paddle.quaternion.setFromAxisAngle(new THREE.Vector3(1, 0, 0), -angle);
         this.rollPivot.add(paddle);
 
       } else if (pattern === 'heart') {
-        // Cute heart-shaped treads
-        const heartGeo = new THREE.CylinderGeometry(outerR * 0.08, outerR * 0.08, width * 0.28, 8);
+        // Cute cylindrical heart/dot treads
+        const heartGeo = new THREE.CylinderGeometry(outerR * 0.08, outerR * 0.08, width * 0.32, 12);
         heartGeo.rotateZ(Math.PI / 2);
         const heart = new THREE.Mesh(heartGeo, treadMat);
         heart.castShadow = true;
-        heart.position.set(0, outerR * 1.01 * cosA, outerR * 1.01 * sinA);
-        heart.rotation.x = -angle;
+        heart.position.set(0, outerR * 1.005 * radY, outerR * 1.005 * radZ);
+        heart.quaternion.setFromAxisAngle(new THREE.Vector3(1, 0, 0), -angle);
         this.rollPivot.add(heart);
       }
     }
@@ -300,7 +311,7 @@ export class StandaloneTire {
     // Recessed center hub cylinder / disc (both sides)
     const hubDepth = halfW * 0.8;
     const discGeo = new THREE.CylinderGeometry(rimR * 0.98, rimR * 0.98, hubDepth, 32);
-    discGeo.rotateZ(Math.PI / 2); // Cylinder along X axle
+    discGeo.rotateZ(Math.PI / 2);
 
     const hub = new THREE.Mesh(discGeo, this.rimMaterial);
     hub.castShadow = true;
@@ -308,18 +319,15 @@ export class StandaloneTire {
     this.rollPivot.add(hub);
 
     // Decorative inner rim ring
-    const ringGeo = new THREE.TorusGeometry(rimR * 0.96, rimR * 0.08, 16, 32);
-    ringGeo.rotateY(Math.PI / 2); // Normal along X axis
+    const ringGeo = new THREE.TorusGeometry(rimR * 0.96, rimR * 0.07, 16, 32);
+    ringGeo.rotateY(Math.PI / 2);
 
-    const leftRing = new THREE.Mesh(ringGeo, this.rimMaterial);
-    leftRing.position.x = -halfW * 0.55;
-    this.rollPivot.add(leftRing);
+    [-1, 1].forEach(side => {
+      const ring = new THREE.Mesh(ringGeo, this.rimMaterial);
+      ring.position.x = side * (halfW * 0.55);
+      this.rollPivot.add(ring);
+    });
 
-    const rightRing = new THREE.Mesh(ringGeo, this.rimMaterial);
-    rightRing.position.x = halfW * 0.55;
-    this.rollPivot.add(rightRing);
-
-    // Build specific rim styles
     if (style === 'star') {
       this.buildStarRim(rimR, halfW);
     } else if (style === 'swirl') {
@@ -344,7 +352,6 @@ export class StandaloneTire {
         spoke.rotation.x = -a;
         this.rollPivot.add(spoke);
       }
-      // Center star cap
       const capGeo = new THREE.SphereGeometry(rimR * 0.28, 16, 12);
       capGeo.scale(0.5, 1, 1);
       const cap = new THREE.Mesh(capGeo, spokeMat);
@@ -394,7 +401,6 @@ export class StandaloneTire {
     const halfW = this.params.width / 2;
     const ringR = (outerR + rimR) * 0.5;
 
-    // Cute decorative sidewall rings (like vintage white-wall or playful colored accent ring)
     const ringGeo = new THREE.TorusGeometry(ringR, outerR * 0.035, 16, 48);
     ringGeo.rotateY(Math.PI / 2);
 
@@ -407,38 +413,31 @@ export class StandaloneTire {
   }
 
   buildCuteFace() {
-    // Exact match for Reference Image #2:
-    // On the outer hub face (both sides so tire is cute from every angle!):
-    // 1. Two blue pill-shaped clay eyes with glossy black pupils
-    // 2. An orange round clay ball nose in center
-    // 3. A happy orange clay sausage smile with gentle dimples!
     const outerR = this.radius;
     const rimR = outerR * this.params.rimRatio;
     const halfW = this.params.width / 2;
 
     [-1, 1].forEach(side => {
       const faceSide = new THREE.Group();
-      // Side 1: facing +X (right). Side -1: facing -X (left).
       faceSide.position.x = side * (halfW * 0.48);
       if (side < 0) {
-        faceSide.rotation.y = Math.PI; // Face outwards on left side too!
+        faceSide.rotation.y = Math.PI;
       }
 
       const eyeScale = rimR * 0.32;
 
       // Eyes: Pill / Capsule geometry (blue clay)
       const eyeGeo = new THREE.CapsuleGeometry(eyeScale * 0.52, eyeScale * 0.62, 12, 16);
-      eyeGeo.scale(0.4, 1.0, 0.75); // Flattish clay pill
+      eyeGeo.scale(0.4, 1.0, 0.75);
 
       // Pupils: black glossy beads
       const pupilGeo = new THREE.SphereGeometry(eyeScale * 0.35, 16, 12);
       pupilGeo.scale(0.3, 1.0, 0.9);
 
-      // Pupil highlight
+      // Specular highlight
       const hlGeo = new THREE.SphereGeometry(eyeScale * 0.12, 8, 8);
       const hlMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
 
-      // Eye positions: slightly above center, left and right along local Z axis
       const eyeSpacingZ = rimR * 0.32;
       const eyeHeightY = rimR * 0.28;
 
@@ -470,7 +469,7 @@ export class StandaloneTire {
       hl2.position.set(eyeScale * 0.3, eyeScale * 0.12, -eyeScale * 0.08);
       eye2.add(hl2);
 
-      // Nose: Chunky orange clay ball in exact center!
+      // Nose: Round clay ball in center
       const noseGeo = new THREE.SphereGeometry(rimR * 0.22, 20, 16);
       noseGeo.scale(0.85, 1.0, 1.0);
       const nose = new THREE.Mesh(noseGeo, this.accentMaterial);
@@ -478,7 +477,7 @@ export class StandaloneTire {
       nose.position.set(rimR * 0.14, 0, 0);
       faceSide.add(nose);
 
-      // Smile: Thick curved clay sausage
+      // Smile: Curved clay sausage
       const smileCurve = new THREE.CatmullRomCurve3([
         new THREE.Vector3(rimR * 0.08, -rimR * 0.18, -rimR * 0.44),
         new THREE.Vector3(rimR * 0.12, -rimR * 0.42, -rimR * 0.25),
@@ -499,7 +498,6 @@ export class StandaloneTire {
     const outerR = this.radius;
     const style = this.params.antennaStyle;
 
-    // Cute spring topper on tire crown
     const springCurve = new THREE.CatmullRomCurve3([
       new THREE.Vector3(0, outerR, 0),
       new THREE.Vector3(0.08, outerR + 0.3, 0.08),
@@ -511,7 +509,6 @@ export class StandaloneTire {
     const spring = new THREE.Mesh(springGeo, this.accentMaterial);
     this.antennaGroup.add(spring);
 
-    // Topper (Star or Heart)
     const topperGeo = style === 'star'
       ? new THREE.OctahedronGeometry(0.35, 0)
       : new THREE.SphereGeometry(0.3, 16, 12);
@@ -540,6 +537,9 @@ export class StandaloneTire {
 
     // Rebuild geometry
     this.buildFullTire();
+
+    // Re-anchor to ground cleanly without sinking
+    this.position.copy(this.up).multiplyScalar(this.centerDist);
     this.updateTransform();
   }
 
@@ -547,15 +547,13 @@ export class StandaloneTire {
     if (this.isGrounded) {
       this.jumpVelocity = 14.0;
       this.isGrounded = false;
-      // Spring squash effect
-      this.squashStretch.set(1.2, 0.7, 1.2);
       return true;
     }
     return false;
   }
 
   update(dt, input) {
-    // 1. Steering & Acceleration (supports both analog axis and digital keys)
+    // 1. Steering & Acceleration (Supports both analog joystick axis and digital keys)
     let steerInput = 0;
     if (typeof input.steerAxis === 'number' && Math.abs(input.steerAxis) > 0.02) {
       steerInput = input.steerAxis;
@@ -573,7 +571,7 @@ export class StandaloneTire {
     const turbo = input.turbo ? 1.6 : 1.0;
 
     // Steering rate
-    if (steerInput !== 0) {
+    if (Math.abs(steerInput) > 0.01) {
       this.steeringAngle = THREE.MathUtils.lerp(
         this.steeringAngle,
         steerInput * this.steerSpeed,
@@ -589,11 +587,10 @@ export class StandaloneTire {
 
     // Acceleration & linear speed
     const currentMaxSpeed = this.maxSpeed * turbo;
-    if (driveInput !== 0) {
+    if (Math.abs(driveInput) > 0.01) {
       this.linearSpeed += driveInput * this.acceleration * dt * turbo;
       this.linearSpeed = THREE.MathUtils.clamp(this.linearSpeed, -currentMaxSpeed * 0.6, currentMaxSpeed);
     } else {
-      // Natural deceleration / rolling friction
       if (this.linearSpeed > 0) {
         this.linearSpeed = Math.max(0, this.linearSpeed - this.friction * dt);
       } else if (this.linearSpeed < 0) {
@@ -601,7 +598,7 @@ export class StandaloneTire {
       }
     }
 
-    // 2. Jump / Bounce physics
+    // 2. Jump / Bounce physics (pure position offset, NO mesh deformation)
     if (!this.isGrounded) {
       this.jumpVelocity -= this.gravity * dt;
       this.jumpHeight += this.jumpVelocity * dt;
@@ -609,46 +606,49 @@ export class StandaloneTire {
         this.jumpHeight = 0;
         this.jumpVelocity = 0;
         this.isGrounded = true;
-        // Impact squash
-        this.squashStretch.set(1.3, 0.65, 1.3);
       }
     }
 
-    // Recover squash & stretch to 1.0
-    this.squashStretch.lerp(new THREE.Vector3(1, 1, 1), dt * 9.0);
-
     // 3. Spherical Motion & Great Circle Rolling
-    // Distance traveled this frame
     const deltaDist = this.linearSpeed * dt;
 
+    // Steering: Rotate forward vector around local Up normal
+    // When steerInput > 0 (left), rotates heading towards -Right (left)
     if (Math.abs(this.steeringAngle) > 0.001) {
-      // Rotate forward vector around the surface normal (steering)
-      const steerDelta = this.steeringAngle * dt;
+      const steerDelta = -this.steeringAngle * dt;
       this.forward.applyAxisAngle(this.up, steerDelta).normalize();
-      this.right.crossVectors(this.forward, this.up).normalize();
+
+      // Maintain strict Right-Handed Orthonormal Basis:
+      // right = up x forward
+      // forward = right x up
+      this.right.crossVectors(this.up, this.forward).normalize();
+      this.forward.crossVectors(this.right, this.up).normalize();
     }
 
+    // Great circle forward step on Earth sphere of radius centerDist
     if (Math.abs(deltaDist) > 0.0001) {
-      // Rolling angle delta: strictly s = r * theta!
+      // Rotation angle strictly synchronized: delta theta = delta s / r
       const rollDelta = deltaDist / this.radius;
       this.rollAngle += rollDelta;
 
-      // Great circle step on Earth sphere of radius centerDist
+      // Angular displacement along Earth sphere
       const sphereAngle = deltaDist / this.centerDist;
 
-      // Rotate position and forward vector around axle (right vector)
+      // Rotate position and heading vector around axle (right vector)
       this.position.applyAxisAngle(this.right, sphereAngle);
       this.forward.applyAxisAngle(this.right, sphereAngle).normalize();
 
-      // Recalculate up normal from Earth center (0, 0, 0)
+      // Surface normal pointing from Earth center (0, 0, 0)
       this.up.copy(this.position).normalize();
 
-      // Ensure exact distance from Earth center
+      // Ensure exact radial distance from Earth center
       this.position.copy(this.up).multiplyScalar(this.centerDist);
 
-      // Re-orthonormalize right and forward to eliminate precision drift
-      this.right.crossVectors(this.forward, this.up).normalize();
-      this.forward.crossVectors(this.up, this.right).normalize();
+      // Re-orthonormalize:
+      // right = up x forward
+      // forward = right x up
+      this.right.crossVectors(this.up, this.forward).normalize();
+      this.forward.crossVectors(this.right, this.up).normalize();
     }
 
     // 4. Update Three.js meshes
@@ -663,21 +663,24 @@ export class StandaloneTire {
   }
 
   updateTransform() {
-    // Tire root position: spherical position + vertical jump offset
+    // Root position: sphere surface position + jump height
     const currentPos = this.position.clone().addScaledVector(this.up, this.jumpHeight);
     this.root.position.copy(currentPos);
 
-    // Construct basis matrix from local frame:
-    // X = right (axle), Y = up (normal), Z = forward (heading)
+    // Guaranteed Right-Handed Rotation Matrix:
+    // Column 0 = right (+X axle)
+    // Column 1 = up (+Y normal)
+    // Column 2 = forward (+Z heading)
+    // Determinant is strictly +1.0!
     const rotMatrix = new THREE.Matrix4().makeBasis(this.right, this.up, this.forward);
     this.root.quaternion.setFromRotationMatrix(rotMatrix);
 
-    // Apply squash and stretch scale to rollPivot
-    this.rollPivot.scale.copy(this.squashStretch);
-
-    // Roll angle around axle (local X axis)
-    // Synchronized strictly with rolling distance:
+    // Rolling rotation strictly around axle (local X axis)
     this.rollPivot.rotation.x = this.rollAngle;
+
+    // Scale is strictly (1, 1, 1) - no mesh distortion ever
+    this.rollPivot.scale.set(1, 1, 1);
+    this.root.scale.set(1, 1, 1);
 
     // If gyroFace is active, the face stays upright
     if (this.params.gyroFace && this.faceAnchor.parent === this.root) {
