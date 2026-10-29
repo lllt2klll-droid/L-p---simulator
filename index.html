@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#d7efff" />
+  <title>Cute 3D Standalone Tire Explorer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <!-- 3D WebGL Canvas Container -->
+  <div id="canvas-container"></div>
+
+  <!-- UI Overlay -->
+  <div id="ui-root">
+    <!-- Top Navigation Bar -->
+    <header class="top-bar">
+      <div class="brand-badge glass-panel">
+        <span class="brand-icon">🛞</span>
+        <span class="brand-title">Cute Tire</span>
+      </div>
+
+      <!-- Center HUD (Speed & Stars Collected) -->
+      <div class="hud-center glass-panel">
+        <div class="hud-stat">
+          <span>⭐</span>
+          <span id="hud-score" class="hud-stat-value">0</span>
+        </div>
+        <div class="hud-stat">
+          <span>⚡</span>
+          <span id="hud-speed" class="hud-stat-value">0 km/h</span>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <!-- Desktop camera mode buttons -->
+        <div class="desktop-cam-group">
+          <button class="btn-pill glass-panel active" data-cam-mode="follow" title="Follow Tire">
+            <span>🎥</span> Follow
+          </button>
+          <button class="btn-pill glass-panel" data-cam-mode="orbit" title="Orbit & Inspect Tire">
+            <span>🔄</span> Orbit
+          </button>
+          <button class="btn-pill glass-panel" data-cam-mode="planet" title="Wide Planet View">
+            <span>🌍</span> Planet
+          </button>
+        </div>
+
+        <!-- Mobile single-cycle camera button -->
+        <button id="btn-cam-cycle" class="btn-pill glass-panel mobile-cam-btn" title="Switch Camera">
+          🎥 Follow
+        </button>
+
+        <!-- Utility buttons -->
+        <button id="btn-sound" class="btn-pill glass-panel btn-icon-only" title="Toggle Sound">🔊</button>
+        <button id="btn-reset" class="btn-pill glass-panel btn-icon-only" title="Reset Tire Position">♻️</button>
+        <button id="btn-screenshot" class="btn-pill glass-panel btn-icon-only" title="Snap Cute Photo">📸</button>
+        <button id="btn-help" class="btn-pill glass-panel btn-icon-only" title="How to Play">❓</button>
+      </div>
+    </header>
+
+    <!-- Desktop Driving Controls Guide -->
+    <div class="keyboard-hints glass-panel">
+      <span>Drive:</span>
+      <span class="kbd-key">W</span><span class="kbd-key">S</span>
+      <span>Steer:</span>
+      <span class="kbd-key">A</span><span class="kbd-key">D</span>
+      <span>Bounce:</span>
+      <span class="kbd-key">Space</span>
+      <span>Turbo:</span>
+      <span class="kbd-key">Shift</span>
+      <span>Horn:</span>
+      <span class="kbd-key">H</span>
+      <span>Cam:</span>
+      <span class="kbd-key">C</span>
+    </div>
+
+    <!-- Customizer Toggle Button -->
+    <button id="btn-toggle-customizer" class="btn-pill customizer-toggle-btn">
+      <span>🎨</span> <span class="customizer-btn-text">Customize</span>
+    </button>
+
+    <!-- Customization Drawer / Mobile Bottom Sheet -->
+    <aside id="customizer-panel" class="customizer-panel glass-panel hidden">
+      <!-- Drag handle for mobile bottom sheet -->
+      <div class="sheet-handle"></div>
+
+      <div class="panel-header">
+        <div class="panel-title">
+          <span>🛞</span> Tire Studio
+        </div>
+        <button id="btn-close-panel" class="btn-close" aria-label="Close">✕</button>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="tabs-nav">
+        <button class="tab-btn active" data-tab="style">Style & Rim</button>
+        <button class="tab-btn" data-tab="materials">Clay Colors</button>
+        <button class="tab-btn" data-tab="features">Cute Extras</button>
+      </div>
+
+      <!-- Panel Body -->
+      <div class="panel-body">
+        <!-- TAB 1: STYLE & SHAPE -->
+        <div id="tab-style" class="tab-content" style="display: flex; flex-direction: column; gap: 14px;">
+          <!-- Presets -->
+          <div>
+            <div class="section-label">Quick Presets</div>
+            <div class="presets-grid">
+              <div class="preset-chip" data-preset="buddy">
+                <span class="emoji">😃</span>
+                <span>Clay Buddy</span>
+              </div>
+              <div class="preset-chip" data-preset="monster">
+                <span class="emoji">🚜</span>
+                <span>Monster</span>
+              </div>
+              <div class="preset-chip" data-preset="bubblegum">
+                <span class="emoji">💖</span>
+                <span>Bubblegum</span>
+              </div>
+              <div class="preset-chip" data-preset="golden">
+                <span class="emoji">🏆</span>
+                <span>Golden</span>
+              </div>
+              <div class="preset-chip" data-preset="tractor">
+                <span class="emoji">🌾</span>
+                <span>Tractor</span>
+              </div>
+              <div class="preset-chip" data-preset="mint">
+                <span class="emoji">🌀</span>
+                <span>Mint Swirl</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tread Pattern -->
+          <div>
+            <div class="section-label">Tread Block Pattern</div>
+            <div class="options-grid">
+              <div class="opt-card selected" data-tread="chevron">
+                <span>⚡</span> Chevron V-Groove
+              </div>
+              <div class="opt-card" data-tread="chunky">
+                <span>🧱</span> Chunky Cleats
+              </div>
+              <div class="opt-card" data-tread="paddle">
+                <span>🛶</span> Paddle Tracks
+              </div>
+              <div class="opt-card" data-tread="heart">
+                <span>💕</span> Cute Hearts
+              </div>
+              <div class="opt-card" data-tread="smooth">
+                <span>⚪</span> Smooth Slick
+              </div>
+            </div>
+          </div>
+
+          <!-- Rim Design -->
+          <div>
+            <div class="section-label">Center Rim Design</div>
+            <div class="options-grid">
+              <div class="opt-card selected" data-rim="face">
+                <span>😊</span> Cute Smiley Face
+              </div>
+              <div class="opt-card" data-rim="star">
+                <span>⭐</span> 5-Spoke Star
+              </div>
+              <div class="opt-card" data-rim="swirl">
+                <span>🌀</span> Candy Swirl
+              </div>
+              <div class="opt-card" data-rim="spokes">
+                <span>⚙️</span> Retro Spokes
+              </div>
+              <div class="opt-card" data-rim="disc">
+                <span>🔘</span> Minimal Disc
+              </div>
+            </div>
+          </div>
+
+          <!-- Sliders: Dimensions -->
+          <div class="control-row">
+            <div class="control-header">
+              <span>Tire Diameter</span>
+              <span id="val-diameter" class="control-val">3.2</span>
+            </div>
+            <input type="range" id="slider-diameter" min="2.2" max="4.5" step="0.1" value="3.2" />
+          </div>
+
+          <div class="control-row">
+            <div class="control-header">
+              <span>Tire Width</span>
+              <span id="val-width" class="control-val">1.8</span>
+            </div>
+            <input type="range" id="slider-width" min="1.0" max="3.0" step="0.1" value="1.8" />
+          </div>
+
+          <div class="control-row">
+            <div class="control-header">
+              <span>Rim Size Ratio</span>
+              <span id="val-rim-ratio" class="control-val">0.58</span>
+            </div>
+            <input type="range" id="slider-rim-ratio" min="0.4" max="0.75" step="0.02" value="0.58" />
+          </div>
+        </div>
+
+        <!-- TAB 2: CLAY COLORS & MATERIALS -->
+        <div id="tab-materials" class="tab-content" style="display: none; flex-direction: column; gap: 14px;">
+          <!-- Rubber Color -->
+          <div class="control-row">
+            <div class="color-picker-row">
+              <span class="section-label" style="margin: 0;">Rubber Color</span>
+              <input type="color" id="color-rubber" value="#2d3036" />
+            </div>
+            <div class="swatches-row">
+              <div class="swatch" data-target="color-rubber" data-color="#2d3036" style="background: #2d3036;"></div>
+              <div class="swatch" data-target="color-rubber" data-color="#191b1f" style="background: #191b1f;"></div>
+              <div class="swatch" data-target="color-rubber" data-color="#f78fb3" style="background: #f78fb3;"></div>
+              <div class="swatch" data-target="color-rubber" data-color="#70a1ff" style="background: #70a1ff;"></div>
+              <div class="swatch" data-target="color-rubber" data-color="#2ed573" style="background: #2ed573;"></div>
+              <div class="swatch" data-target="color-rubber" data-color="#ffa502" style="background: #ffa502;"></div>
+            </div>
+          </div>
+
+          <!-- Rim Color -->
+          <div class="control-row">
+            <div class="color-picker-row">
+              <span class="section-label" style="margin: 0;">Rim Center Color</span>
+              <input type="color" id="color-rim" value="#3c4048" />
+            </div>
+            <div class="swatches-row">
+              <div class="swatch" data-target="color-rim" data-color="#3c4048" style="background: #3c4048;"></div>
+              <div class="swatch" data-target="color-rim" data-color="#ffffff" style="background: #ffffff;"></div>
+              <div class="swatch" data-target="color-rim" data-color="#ffd700" style="background: #ffd700;"></div>
+              <div class="swatch" data-target="color-rim" data-color="#4ea8de" style="background: #4ea8de;"></div>
+              <div class="swatch" data-target="color-rim" data-color="#ff6b81" style="background: #ff6b81;"></div>
+              <div class="swatch" data-target="color-rim" data-color="#2bd980" style="background: #2bd980;"></div>
+            </div>
+          </div>
+
+          <!-- Accent / Face Color -->
+          <div class="control-row">
+            <div class="color-picker-row">
+              <span class="section-label" style="margin: 0;">Accent / Face Color</span>
+              <input type="color" id="color-accent" value="#ff733b" />
+            </div>
+            <div class="swatches-row">
+              <div class="swatch" data-target="color-accent" data-color="#ff733b" style="background: #ff733b;"></div>
+              <div class="swatch" data-target="color-accent" data-color="#ff4757" style="background: #ff4757;"></div>
+              <div class="swatch" data-target="color-accent" data-color="#ffe600" style="background: #ffe600;"></div>
+              <div class="swatch" data-target="color-accent" data-color="#2ed573" style="background: #2ed573;"></div>
+              <div class="swatch" data-target="color-accent" data-color="#1e90ff" style="background: #1e90ff;"></div>
+            </div>
+          </div>
+
+          <!-- Roughness / Glossiness Slider -->
+          <div class="control-row">
+            <div class="control-header">
+              <span>Clay Roughness (Glossy ↔ Matte)</span>
+              <span id="val-roughness" class="control-val">0.65</span>
+            </div>
+            <input type="range" id="slider-roughness" min="0.15" max="0.95" step="0.05" value="0.65" />
+          </div>
+
+          <!-- Sidewall Ring Toggle -->
+          <div class="toggle-row">
+            <span style="font-size: 13px; font-weight: 700;">Sidewall Decorative Rings</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggle-sidewall" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- TAB 3: CUTE EXTRAS & ACCESSORIES -->
+        <div id="tab-features" class="tab-content" style="display: none; flex-direction: column; gap: 14px;">
+          <!-- Gyro Face mode -->
+          <div class="toggle-row">
+            <div>
+              <div style="font-size: 13px; font-weight: 700;">Face Gyro Steady</div>
+              <div style="font-size: 11px; color: var(--text-muted);">Face stays upright as tire rolls</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggle-gyro" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <!-- Earth Face Toggle -->
+          <div class="toggle-row">
+            <div>
+              <div style="font-size: 13px; font-weight: 700;">Cute Earth Face</div>
+              <div style="font-size: 11px; color: var(--text-muted);">Smiling face on planet ocean</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggle-earth-face" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <!-- Spring Antenna -->
+          <div>
+            <div class="section-label">Spring Antenna Topper</div>
+            <div class="options-grid">
+              <div class="opt-card selected" data-antenna="none">
+                <span>🚫</span> None
+              </div>
+              <div class="opt-card" data-antenna="star">
+                <span>⭐</span> Star Spring
+              </div>
+              <div class="opt-card" data-antenna="heart">
+                <span>💖</span> Heart Spring
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Mobile Touch Controls HUD -->
+    <div class="mobile-hud">
+      <!-- Virtual Analog Joystick on Bottom-Left -->
+      <div id="joystick-zone" class="joystick-zone">
+        <div id="joystick-base" class="joystick-base">
+          <div class="joystick-indicator ind-up">▲</div>
+          <div class="joystick-indicator ind-down">▼</div>
+          <div class="joystick-indicator ind-left">◀</div>
+          <div class="joystick-indicator ind-right">▶</div>
+          <div id="joystick-knob" class="joystick-knob">
+            <span class="knob-icon">🛞</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ergonomic Action Buttons on Bottom-Right -->
+      <div class="touch-actions">
+        <button id="touch-honk" class="touch-action-btn btn-honk" title="Squeak / Horn">
+          <span class="btn-icon">🎺</span>
+          <span class="btn-label">SQUEAK</span>
+        </button>
+        <button id="touch-turbo" class="touch-action-btn btn-turbo" title="Turbo Sprint">
+          <span class="btn-icon">⚡</span>
+          <span class="btn-label">TURBO</span>
+        </button>
+        <button id="touch-jump" class="touch-action-btn btn-jump" title="Bounce / Jump">
+          <span class="btn-icon">🦘</span>
+          <span class="btn-label">JUMP</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Help & Instructions Modal -->
+  <div id="help-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-title">
+        <span>🛞</span> How to Play
+      </div>
+      <div class="modal-body">
+        <p>Welcome to <strong>Cute Tire Explorer</strong>! Control a single standalone 3D tire rolling smoothly on a friendly spherical Earth.</p>
+        <ul>
+          <li><strong>Mobile Joystick:</strong> Drag the left joystick 🛞 in any direction to steer and drive!</li>
+          <li><strong>Jump:</strong> Tap 🦘 to bounce over terrain.</li>
+          <li><strong>Turbo:</strong> Hold ⚡ to sprint at high speeds.</li>
+          <li><strong>Horn:</strong> Tap 🎺 for cute squeaks!</li>
+          <li><strong>Desktop Keys:</strong> W/A/S/D or Arrows, Space to bounce, Shift for turbo, H to honk, C to cycle camera.</li>
+          <li><strong>Customizer:</strong> Tap 🎨 Customize to swap treads, rim faces, and clay colors live!</li>
+        </ul>
+      </div>
+      <button id="btn-close-help" class="btn-pill" style="align-self: flex-end; background: var(--primary); color: white;">
+        Got it! Let's Roll ✨
+      </button>
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
