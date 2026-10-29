@@ -202,6 +202,14 @@ export class UIManager {
       });
     }
 
+    // Clear Cache & Update Version button
+    const clearCacheBtn = document.getElementById('btn-clear-cache');
+    if (clearCacheBtn) {
+      clearCacheBtn.addEventListener('click', () => {
+        this.clearCacheAndUpdate();
+      });
+    }
+
     // Screenshot button
     const snapBtn = document.getElementById('btn-screenshot');
     if (snapBtn) {
@@ -618,6 +626,49 @@ export class UIManager {
       };
       mobileCam.textContent = labels[nextMode];
     }
+  }
+
+  async clearCacheAndUpdate() {
+    sound.playCollect();
+    if (navigator.vibrate) {
+      try { navigator.vibrate([30, 40, 50]); } catch (e) {}
+    }
+
+    // Show toast message
+    const toast = document.getElementById('toast-notify');
+    const toastText = document.getElementById('toast-text');
+    if (toast && toastText) {
+      toastText.textContent = '🧹 Đang dọn sạch cache & nạp phiên bản mới...';
+      toast.classList.add('show');
+    }
+
+    try {
+      // 1. Delete all browser caches in CacheStorage API
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map(name => caches.delete(name)));
+      }
+
+      // 2. Unregister any active service workers
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map(reg => reg.unregister()));
+      }
+
+      // 3. Clear local & session storage
+      try {
+        localStorage.clear();
+        sessionStorage.clear();
+      } catch (err) {}
+    } catch (err) {
+      console.warn('Error during cache clear:', err);
+    }
+
+    // 4. Force hard reload with timestamp query param to bypass CDN/browser cache
+    setTimeout(() => {
+      const cleanUrl = window.location.origin + window.location.pathname;
+      window.location.replace(`${cleanUrl}?v=${Date.now()}`);
+    }, 500);
   }
 
   takeScreenshot() {

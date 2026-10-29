@@ -10,8 +10,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="./assets/index-T8Aw3vIG.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-D9x0-HFM.css">
+  <script type="module" crossorigin src="./assets/index-CQx0o-4c.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-Bq5L6IUV.css">
 </head>
 <body>
   <!-- 3D WebGL Canvas Container -->
@@ -58,12 +58,21 @@
         </button>
 
         <!-- Utility buttons -->
-        <button id="btn-sound" class="btn-pill glass-panel btn-icon-only" title="Toggle Sound">🔊</button>
-        <button id="btn-reset" class="btn-pill glass-panel btn-icon-only" title="Reset Tire Position">♻️</button>
-        <button id="btn-screenshot" class="btn-pill glass-panel btn-icon-only" title="Snap Cute Photo">📸</button>
-        <button id="btn-help" class="btn-pill glass-panel btn-icon-only" title="How to Play">❓</button>
+        <button id="btn-sound" class="btn-pill glass-panel btn-icon-only" title="Bật/Tắt Âm Thanh">🔊</button>
+        <button id="btn-reset" class="btn-pill glass-panel btn-icon-only" title="Đặt Lại Vị Trí">♻️</button>
+        <button id="btn-clear-cache" class="btn-pill glass-panel btn-update" title="Xóa Cache & Cập Nhật Phiên Bản Mới">
+          <span>🧹</span><span class="btn-cache-label"> Cập Nhật</span>
+        </button>
+        <button id="btn-screenshot" class="btn-pill glass-panel btn-icon-only" title="Chụp Ảnh Đẹp">📸</button>
+        <button id="btn-help" class="btn-pill glass-panel btn-icon-only" title="Hướng Dẫn">❓</button>
       </div>
     </header>
+
+    <!-- Toast Notification for Cache Clear & Update -->
+    <div id="toast-notify" class="toast-notify">
+      <span class="toast-icon">✨</span>
+      <span id="toast-text" class="toast-text">Đang dọn cache & tải phiên bản mới nhất...</span>
+    </div>
 
     <!-- Desktop Driving Controls Guide -->
     <div class="keyboard-hints glass-panel">
