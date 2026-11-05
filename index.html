@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#d7efff" />
-  <title>Lốp Dự Phòng — Hành Trình Si Tình</title>
+  <title>Lốp Dự Phòng — Bạn Có Phải Lốp Không?</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛞</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
@@ -23,13 +24,13 @@
   <div id="ui-root">
     <!-- Top Navigation Bar -->
     <header class="top-bar">
-      <div class="brand-badge glass-panel">
+      <div class="brand-badge liquid-glass-panel">
         <span class="brand-icon">🛞</span>
         <span class="brand-title">Lốp Si Tình</span>
       </div>
 
       <!-- Center Journey HUD (Progress 1/10) -->
-      <div id="journey-hud" class="journey-hud glass-panel" style="display: none;">
+      <div id="journey-hud" class="journey-hud liquid-glass-panel" style="display: none;">
         <div class="progress-info">
           <span class="progress-badge">Trạm</span>
           <span id="progress-question-text" class="progress-count">Câu 1/10</span>
@@ -37,7 +38,7 @@
         <div class="progress-bar-bg">
           <div id="progress-bar-fill" class="progress-bar-fill" style="width: 10%;"></div>
         </div>
-        <button id="btn-open-question-now" class="btn-pill btn-roll-stop" title="Mở trạm câu hỏi ngay">
+        <button id="btn-open-question-now" class="btn-liquid-glass btn-roll-stop" title="Mở trạm câu hỏi ngay">
           <span>💬</span> Mở Câu
         </button>
       </div>
@@ -46,30 +47,30 @@
       <div class="top-actions">
         <!-- Desktop camera mode buttons -->
         <div class="desktop-cam-group">
-          <button class="btn-pill glass-panel active" data-cam-mode="follow" title="Theo sau lốp">
+          <button class="btn-liquid-glass active" data-cam-mode="follow" title="Theo sau lốp">
             <span>🎥</span> Follow
           </button>
-          <button class="btn-pill glass-panel" data-cam-mode="orbit" title="Xoay ngắm lốp">
+          <button class="btn-liquid-glass" data-cam-mode="orbit" title="Xoay ngắm lốp">
             <span>🔄</span> Orbit
           </button>
-          <button class="btn-pill glass-panel" data-cam-mode="planet" title="Toàn cảnh Trái Đất">
+          <button class="btn-liquid-glass" data-cam-mode="planet" title="Toàn cảnh Trái Đất">
             <span>🌍</span> Planet
           </button>
         </div>
 
         <!-- Mobile single-cycle camera button -->
-        <button id="btn-cam-cycle" class="btn-pill glass-panel mobile-cam-btn" title="Đổi Camera">
+        <button id="btn-cam-cycle" class="btn-liquid-glass mobile-cam-btn" title="Đổi Camera">
           🎥 Follow
         </button>
 
         <!-- Utility buttons -->
-        <button id="btn-sound" class="btn-pill glass-panel btn-icon-only" title="Bật/Tắt Âm Thanh">🔊</button>
-        <button id="btn-reset" class="btn-pill glass-panel btn-icon-only" title="Đặt Lại Vị Trí">♻️</button>
-        <button id="btn-clear-cache" class="btn-pill glass-panel btn-update" title="Xóa Cache & Cập Nhật Phiên Bản Mới">
+        <button id="btn-sound" class="btn-liquid-glass btn-icon-only" title="Bật/Tắt Âm Thanh">🔊</button>
+        <button id="btn-reset" class="btn-liquid-glass btn-icon-only" title="Đặt Lại Vị Trí">♻️</button>
+        <button id="btn-clear-cache" class="btn-liquid-glass btn-update" title="Xóa Cache & Cập Nhật Phiên Bản Mới">
           <span>🧹</span><span class="btn-cache-label"> Cập Nhật</span>
         </button>
-        <button id="btn-screenshot" class="btn-pill glass-panel btn-icon-only" title="Chụp Ảnh Kỷ Niệm">📸</button>
-        <button id="btn-help" class="btn-pill glass-panel btn-icon-only" title="Hướng Dẫn Chơi">❓</button>
+        <button id="btn-screenshot" class="btn-liquid-glass btn-icon-only" title="Chụp Ảnh Kỷ Niệm">📸</button>
+        <button id="btn-help" class="btn-liquid-glass btn-icon-only" title="Hướng Dẫn Chơi">❓</button>
       </div>
     </header>
 
@@ -79,34 +80,39 @@
       <span id="toast-text" class="toast-text">Đang dọn cache & tải phiên bản mới nhất...</span>
     </div>
 
-    <!-- START SCREEN OVERLAY -->
+    <!-- MÀN HÌNH MỚI MỞ APP DUY NHẤT: "BẠN CÓ PHẢI LỐP KHÔNG?" -->
     <div id="start-screen" class="start-screen-overlay">
-      <div class="start-card glass-panel">
-        <div class="start-badge">🎮 Game 3D Hài Hước</div>
-        <h1 class="start-title">LỐP DỰ PHÒNG</h1>
-        <h2 class="start-subtitle">HÀNH TRÌNH SI TÌNH 💔</h2>
-        <p class="start-desc">
-          Vượt qua 10 tình huống trắc nghiệm hài hước về kiếp làm "lốp sơ-cua" trong tình yêu.
-          Lăn bánh trên quả địa cầu 3D, đối diện sự thật phũ phàng và mở khóa 3 cái kết bất ngờ!
-        </p>
+      <div class="opening-card liquid-glass-panel">
+        <div class="opening-icon-badge">🛞</div>
+        <h1 class="opening-title">Bạn có phải lốp không?</h1>
+        <p class="opening-sub">Chào mừng bạn đến với Hành Trình Lốp Dự Phòng Si Tình</p>
 
-        <div class="start-actions">
-          <button id="btn-start-game" class="btn-start-play">
-            <span>🚀</span> BẮT ĐẦU HÀNH TRÌNH
+        <div class="opening-actions">
+          <button id="btn-answer-yes" class="btn-liquid-glass btn-open-choice btn-choice-yes">
+            <span class="choice-emoji">💔</span>
+            <div class="choice-text-col">
+              <span class="choice-title">Đúng, tôi là lốp dự phòng</span>
+              <span class="choice-desc">Luôn nằm trong cốp chờ người ta gọi</span>
+            </div>
           </button>
-          <button id="btn-open-customizer-start" class="btn-start-custom">
-            <span>🎨</span> TÙY CHỈNH LỐP
+
+          <button id="btn-answer-no" class="btn-liquid-glass btn-open-choice btn-choice-no">
+            <span class="choice-emoji">😎</span>
+            <div class="choice-text-col">
+              <span class="choice-title">Không, nhưng muốn thử làm lốp</span>
+              <span class="choice-desc">Vào trải nghiệm cảm giác chịu áp lực</span>
+            </div>
           </button>
         </div>
 
-        <div class="start-footer-hint">
-          <span>🕹️ Lái bằng Joystick / W-A-S-D • Lăn tự do trên Trái Đất để khám phá trạm câu hỏi</span>
-        </div>
+        <button id="btn-open-customizer-start" class="btn-liquid-glass btn-subtle-custom">
+          <span>🎨</span> Tùy chỉnh màu sắc & phụ kiện lốp
+        </button>
       </div>
     </div>
 
     <!-- Desktop Driving Controls Guide -->
-    <div id="keyboard-guide" class="keyboard-hints glass-panel" style="display: none;">
+    <div id="keyboard-guide" class="keyboard-hints liquid-glass-panel" style="display: none;">
       <span>Lái:</span>
       <span class="kbd-key">W</span><span class="kbd-key">S</span>
       <span>Bẻ lái:</span>
@@ -122,19 +128,19 @@
     </div>
 
     <!-- Customizer Toggle Button (Visible during gameplay) -->
-    <button id="btn-toggle-customizer" class="btn-pill customizer-toggle-btn">
+    <button id="btn-toggle-customizer" class="btn-liquid-glass customizer-toggle-btn">
       <span>🎨</span> <span class="customizer-btn-text">Tùy Chỉnh Lốp</span>
     </button>
 
     <!-- Customization Drawer / Mobile Bottom Sheet -->
-    <aside id="customizer-panel" class="customizer-panel glass-panel hidden">
+    <aside id="customizer-panel" class="customizer-panel liquid-glass-panel hidden">
       <div class="sheet-handle"></div>
 
       <div class="panel-header">
         <div class="panel-title">
           <span>🛞</span> Xưởng Độ Lốp Si Tình
         </div>
-        <button id="btn-close-panel" class="btn-close" aria-label="Close">✕</button>
+        <button id="btn-close-panel" class="btn-liquid-glass btn-close" aria-label="Close">✕</button>
       </div>
 
       <!-- Navigation Tabs -->
@@ -152,47 +158,47 @@
           <div>
             <div class="section-label">Mẫu Thiết Kế Nhanh</div>
             <div class="presets-grid">
-              <div class="preset-chip" data-preset="tan">
+              <div class="preset-chip btn-liquid-glass" data-preset="tan">
                 <span class="emoji">👑</span>
                 <span>TÂN Pro</span>
               </div>
-              <div class="preset-chip" data-preset="buddy">
+              <div class="preset-chip btn-liquid-glass" data-preset="buddy">
                 <span class="emoji">😃</span>
                 <span>Clay Buddy</span>
               </div>
-              <div class="preset-chip" data-preset="monster">
+              <div class="preset-chip btn-liquid-glass" data-preset="monster">
                 <span class="emoji">🚜</span>
                 <span>Monster</span>
               </div>
-              <div class="preset-chip" data-preset="bubblegum">
+              <div class="preset-chip btn-liquid-glass" data-preset="bubblegum">
                 <span class="emoji">💖</span>
                 <span>Kẹo Ngọt</span>
               </div>
-              <div class="preset-chip" data-preset="golden">
+              <div class="preset-chip btn-liquid-glass" data-preset="golden">
                 <span class="emoji">🏆</span>
                 <span>Hoàng Gia</span>
               </div>
-              <div class="preset-chip" data-preset="tractor">
+              <div class="preset-chip btn-liquid-glass" data-preset="tractor">
                 <span class="emoji">🌾</span>
                 <span>Cày Bừa</span>
               </div>
             </div>
           </div>
 
-          <!-- Tread Pattern (Max 3 cute styles according to PLAN.md) -->
+          <!-- Tread Pattern -->
           <div>
             <div class="section-label">Kiểu Gai Lốp (Treads)</div>
             <div class="options-grid">
-              <div class="opt-card selected" data-tread="chevron">
+              <div class="opt-card btn-liquid-glass selected" data-tread="chevron">
                 <span>⚡</span> Gai Chữ V (Chevron)
               </div>
-              <div class="opt-card" data-tread="chunky">
+              <div class="opt-card btn-liquid-glass" data-tread="chunky">
                 <span>🧱</span> Gai Vuông (Chunky Cleats)
               </div>
-              <div class="opt-card" data-tread="heart">
+              <div class="opt-card btn-liquid-glass" data-tread="heart">
                 <span>💕</span> Gai Trái Tim (Cute Hearts)
               </div>
-              <div class="opt-card" data-tread="paddle">
+              <div class="opt-card btn-liquid-glass" data-tread="paddle">
                 <span>🛶</span> Gai Gạt Nước (Paddle)
               </div>
             </div>
@@ -202,16 +208,16 @@
           <div>
             <div class="section-label">Mâm Xe Giữa (Rim Hub)</div>
             <div class="options-grid">
-              <div class="opt-card selected" data-rim="face">
+              <div class="opt-card btn-liquid-glass selected" data-rim="face">
                 <span>😊</span> Mặt Cười Đất Sét
               </div>
-              <div class="opt-card" data-rim="star">
+              <div class="opt-card btn-liquid-glass" data-rim="star">
                 <span>⭐</span> Ngôi Sao 5 Cánh
               </div>
-              <div class="opt-card" data-rim="swirl">
+              <div class="opt-card btn-liquid-glass" data-rim="swirl">
                 <span>🌀</span> Kẹo Xoắn Candy
               </div>
-              <div class="opt-card" data-rim="spokes">
+              <div class="opt-card btn-liquid-glass" data-rim="spokes">
                 <span>⚙️</span> Nan Hoa Cổ Điển
               </div>
             </div>
@@ -307,26 +313,26 @@
 
         <!-- TAB 3: CUTE EXTRAS, ACCESSORIES & EXPRESSIONS -->
         <div id="tab-features" class="tab-content" style="display: none; flex-direction: column; gap: 14px;">
-          <!-- Accessories selection (Bow, Glasses, Scarf, Crown) -->
+          <!-- Accessories selection -->
           <div>
             <div class="section-label">Phụ Kiện Thời Trang (Accessories)</div>
             <div class="options-grid">
-              <div class="opt-card selected" data-antenna="crown">
+              <div class="opt-card btn-liquid-glass selected" data-antenna="crown">
                 <span>👑</span> Vương Miện TÂN
               </div>
-              <div class="opt-card" data-antenna="bow">
+              <div class="opt-card btn-liquid-glass" data-antenna="bow">
                 <span>🎀</span> Nơ Hồng Xinh
               </div>
-              <div class="opt-card" data-antenna="glasses">
+              <div class="opt-card btn-liquid-glass" data-antenna="glasses">
                 <span>🕶️</span> Kính Râm Ngầu
               </div>
-              <div class="opt-card" data-antenna="scarf">
+              <div class="opt-card btn-liquid-glass" data-antenna="scarf">
                 <span>🧣</span> Khăn Quàng Ấm Áp
               </div>
-              <div class="opt-card" data-antenna="star">
+              <div class="opt-card btn-liquid-glass" data-antenna="star">
                 <span>⭐</span> Ngôi Sao Vàng
               </div>
-              <div class="opt-card" data-antenna="none">
+              <div class="opt-card btn-liquid-glass" data-antenna="none">
                 <span>🚫</span> Không Có
               </div>
             </div>
@@ -336,14 +342,14 @@
           <div>
             <div class="section-label">Biểu Cảm Khuôn Mặt</div>
             <div class="options-grid">
-              <div class="opt-card selected" data-expression="happy">
+              <div class="opt-card btn-liquid-glass selected" data-expression="happy">
                 <span>😃</span> Tươi Cười Hạnh Phúc
               </div>
-              <div class="opt-card" data-expression="wink">
+              <div class="opt-card btn-liquid-glass" data-expression="wink">
                 <span>😉</span> Nháy Mắt Tinh Nghịch
               </div>
-              <div class="opt-card" data-expression="confident">
-                <span>😎</span> Tự Tin Đầy Bản Lĩnh
+              <div class="opt-card btn-liquid-glass" data-expression="confident">
+                <span>😎</span> Tự Tin Bản Lĩnh
               </div>
             </div>
           </div>
@@ -389,7 +395,7 @@
 
     <!-- QUESTION MODAL (Màn hình trắc nghiệm 10 câu hỏi) -->
     <div id="question-modal" class="modal-overlay">
-      <div class="question-card glass-panel">
+      <div class="question-card liquid-glass-panel">
         <div class="question-top-bar">
           <span id="q-station-badge" class="station-badge">Trạm #1/10 🛞</span>
           <span class="q-mood-icon">💔</span>
@@ -411,7 +417,7 @@
         </div>
 
         <!-- Continue Button -->
-        <button id="btn-next-question" class="btn-primary-large btn-continue" style="display: none;">
+        <button id="btn-next-question" class="btn-liquid-glass btn-continue" style="display: none;">
           <span>✨</span> TIẾP TỤC LĂN BÁNH
         </button>
       </div>
@@ -419,7 +425,7 @@
 
     <!-- ENDING MODAL (Màn hình 3 kết thúc đặc sắc) -->
     <div id="ending-modal" class="modal-overlay">
-      <div class="ending-card glass-panel">
+      <div class="ending-card liquid-glass-panel">
         <div id="ending-badge" class="ending-badge">👑 KẾT THÚC BÍ MẬT</div>
         <h2 id="ending-title" class="ending-title">THÁNH CHỌN C</h2>
         
@@ -432,21 +438,21 @@
         </p>
 
         <div class="ending-stats">
-          <div class="stat-item">
+          <div class="stat-item liquid-glass-panel">
             <span class="stat-label">Đáp Án Đã Chọn</span>
             <span id="stat-answers-summary" class="stat-value">C-C-C-C-C-C-C-C-C-C</span>
           </div>
-          <div class="stat-item">
+          <div class="stat-item liquid-glass-panel">
             <span class="stat-label">Danh Hiệu Tình Yêu</span>
             <span id="stat-title" class="stat-value">Lốp Dự Phòng Huyền Thoại</span>
           </div>
         </div>
 
         <div class="ending-actions">
-          <button id="btn-replay" class="btn-primary-large">
+          <button id="btn-replay" class="btn-liquid-glass btn-primary-large">
             <span>🔄</span> CHƠI LẠI HÀNH TRÌNH
           </button>
-          <button id="btn-snap-ending" class="btn-secondary-large">
+          <button id="btn-snap-ending" class="btn-liquid-glass btn-secondary-large">
             <span>📸</span> CHỤP KỶ NIỆM
           </button>
         </div>
@@ -470,15 +476,15 @@
 
       <!-- Action Buttons on Bottom-Right -->
       <div class="touch-actions">
-        <button id="touch-honk" class="touch-action-btn btn-honk" title="Còi chip chip">
+        <button id="touch-honk" class="btn-liquid-glass touch-action-btn btn-honk" title="Còi chip chip">
           <span class="btn-icon">🎺</span>
           <span class="btn-label">SQUEAK</span>
         </button>
-        <button id="touch-turbo" class="touch-action-btn btn-turbo" title="Tăng tốc">
+        <button id="touch-turbo" class="btn-liquid-glass touch-action-btn btn-turbo" title="Tăng tốc">
           <span class="btn-icon">⚡</span>
           <span class="btn-label">TURBO</span>
         </button>
-        <button id="touch-jump" class="touch-action-btn btn-jump" title="Nhảy nảy">
+        <button id="touch-jump" class="btn-liquid-glass touch-action-btn btn-jump" title="Nhảy nảy">
           <span class="btn-icon">🦘</span>
           <span class="btn-label">JUMP</span>
         </button>
@@ -488,7 +494,7 @@
 
   <!-- Help & Instructions Modal -->
   <div id="help-modal" class="modal-overlay">
-    <div class="modal-card">
+    <div class="modal-card liquid-glass-panel">
       <div class="modal-title">
         <span>🛞</span> Luật Chơi: Lốp Dự Phòng
       </div>
@@ -507,7 +513,7 @@
           </li>
         </ul>
       </div>
-      <button id="btn-close-help" class="btn-pill" style="align-self: flex-end; background: var(--primary); color: white;">
+      <button id="btn-close-help" class="btn-liquid-glass btn-continue" style="align-self: flex-end;">
         Đã hiểu! Lên đường thôi ✨
       </button>
     </div>
