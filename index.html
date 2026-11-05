@@ -1,76 +1,69 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#d7efff" />
-  <title>Lốp Dự Phòng — Bạn Có Phải Lốp Không?</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛞</text></svg>">
+  <title>Cute 3D Standalone Tire Explorer</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
   <!-- 3D WebGL Canvas Container -->
   <div id="canvas-container"></div>
 
-  <!-- Floating 'C' Particles Container for Ending B -->
-  <div id="c-particles-container" class="c-particles-container"></div>
-
-  <!-- UI Root Layer -->
+  <!-- UI Overlay -->
   <div id="ui-root">
     <!-- Top Navigation Bar -->
     <header class="top-bar">
-      <div class="brand-badge liquid-glass-panel">
+      <div class="brand-badge glass-panel">
         <span class="brand-icon">🛞</span>
-        <span class="brand-title">Lốp Si Tình</span>
+        <span class="brand-title">Cute Tire</span>
       </div>
 
-      <!-- Center Journey HUD (Progress 1/10) -->
-      <div id="journey-hud" class="journey-hud liquid-glass-panel" style="display: none;">
-        <div class="progress-info">
-          <span class="progress-badge">Trạm</span>
-          <span id="progress-question-text" class="progress-count">Câu 1/10</span>
+      <!-- Center HUD (Speed & Stars Collected) -->
+      <div class="hud-center glass-panel">
+        <div class="hud-stat">
+          <span>⭐</span>
+          <span id="hud-score" class="hud-stat-value">0</span>
         </div>
-        <div class="progress-bar-bg">
-          <div id="progress-bar-fill" class="progress-bar-fill" style="width: 10%;"></div>
+        <div class="hud-stat">
+          <span>⚡</span>
+          <span id="hud-speed" class="hud-stat-value">0 km/h</span>
         </div>
-        <button id="btn-open-question-now" class="btn-liquid-glass btn-roll-stop" title="Mở trạm câu hỏi ngay">
-          <span>💬</span> Mở Câu
-        </button>
       </div>
 
-      <!-- Top Right Actions -->
       <div class="top-actions">
         <!-- Desktop camera mode buttons -->
         <div class="desktop-cam-group">
-          <button class="btn-liquid-glass active" data-cam-mode="follow" title="Theo sau lốp">
+          <button class="btn-pill glass-panel active" data-cam-mode="follow" title="Follow Tire">
             <span>🎥</span> Follow
           </button>
-          <button class="btn-liquid-glass" data-cam-mode="orbit" title="Xoay ngắm lốp">
+          <button class="btn-pill glass-panel" data-cam-mode="orbit" title="Orbit & Inspect Tire">
             <span>🔄</span> Orbit
           </button>
-          <button class="btn-liquid-glass" data-cam-mode="planet" title="Toàn cảnh Trái Đất">
+          <button class="btn-pill glass-panel" data-cam-mode="planet" title="Wide Planet View">
             <span>🌍</span> Planet
           </button>
         </div>
 
         <!-- Mobile single-cycle camera button -->
-        <button id="btn-cam-cycle" class="btn-liquid-glass mobile-cam-btn" title="Đổi Camera">
+        <button id="btn-cam-cycle" class="btn-pill glass-panel mobile-cam-btn" title="Switch Camera">
           🎥 Follow
         </button>
 
         <!-- Utility buttons -->
-        <button id="btn-sound" class="btn-liquid-glass btn-icon-only" title="Bật/Tắt Âm Thanh">🔊</button>
-        <button id="btn-reset" class="btn-liquid-glass btn-icon-only" title="Đặt Lại Vị Trí">♻️</button>
-        <button id="btn-clear-cache" class="btn-liquid-glass btn-update" title="Xóa Cache & Cập Nhật Phiên Bản Mới">
+        <button id="btn-sound" class="btn-pill glass-panel btn-icon-only" title="Bật/Tắt Âm Thanh">🔊</button>
+        <button id="btn-reset" class="btn-pill glass-panel btn-icon-only" title="Đặt Lại Vị Trí">♻️</button>
+        <button id="btn-clear-cache" class="btn-pill glass-panel btn-update" title="Xóa Cache & Cập Nhật Phiên Bản Mới">
           <span>🧹</span><span class="btn-cache-label"> Cập Nhật</span>
         </button>
-        <button id="btn-screenshot" class="btn-liquid-glass btn-icon-only" title="Chụp Ảnh Kỷ Niệm">📸</button>
-        <button id="btn-help" class="btn-liquid-glass btn-icon-only" title="Hướng Dẫn Chơi">❓</button>
+        <button id="btn-screenshot" class="btn-pill glass-panel btn-icon-only" title="Chụp Ảnh Đẹp">📸</button>
+        <button id="btn-help" class="btn-pill glass-panel btn-icon-only" title="Hướng Dẫn">❓</button>
       </div>
     </header>
 
@@ -80,153 +73,129 @@
       <span id="toast-text" class="toast-text">Đang dọn cache & tải phiên bản mới nhất...</span>
     </div>
 
-    <!-- MÀN HÌNH MỚI MỞ APP DUY NHẤT: "BẠN CÓ PHẢI LỐP KHÔNG?" -->
-    <div id="start-screen" class="start-screen-overlay">
-      <div class="opening-card liquid-glass-panel">
-        <div class="opening-icon-badge">🛞</div>
-        <h1 class="opening-title">Bạn có phải lốp không?</h1>
-        <p class="opening-sub">Chào mừng bạn đến với Hành Trình Lốp Dự Phòng Si Tình</p>
-
-        <div class="opening-actions">
-          <button id="btn-answer-yes" class="btn-liquid-glass btn-open-choice btn-choice-yes">
-            <span class="choice-emoji">💔</span>
-            <div class="choice-text-col">
-              <span class="choice-title">Đúng, tôi là lốp dự phòng</span>
-              <span class="choice-desc">Luôn nằm trong cốp chờ người ta gọi</span>
-            </div>
-          </button>
-
-          <button id="btn-answer-no" class="btn-liquid-glass btn-open-choice btn-choice-no">
-            <span class="choice-emoji">😎</span>
-            <div class="choice-text-col">
-              <span class="choice-title">Không, nhưng muốn thử làm lốp</span>
-              <span class="choice-desc">Vào trải nghiệm cảm giác chịu áp lực</span>
-            </div>
-          </button>
-        </div>
-
-        <button id="btn-open-customizer-start" class="btn-liquid-glass btn-subtle-custom">
-          <span>🎨</span> Tùy chỉnh màu sắc & phụ kiện lốp
-        </button>
-      </div>
-    </div>
-
     <!-- Desktop Driving Controls Guide -->
-    <div id="keyboard-guide" class="keyboard-hints liquid-glass-panel" style="display: none;">
-      <span>Lái:</span>
+    <div class="keyboard-hints glass-panel">
+      <span>Drive:</span>
       <span class="kbd-key">W</span><span class="kbd-key">S</span>
-      <span>Bẻ lái:</span>
+      <span>Steer:</span>
       <span class="kbd-key">A</span><span class="kbd-key">D</span>
-      <span>Nhảy:</span>
+      <span>Bounce:</span>
       <span class="kbd-key">Space</span>
       <span>Turbo:</span>
       <span class="kbd-key">Shift</span>
-      <span>Còi:</span>
+      <span>Horn:</span>
       <span class="kbd-key">H</span>
-      <span>Camera:</span>
+      <span>Cam:</span>
       <span class="kbd-key">C</span>
     </div>
 
-    <!-- Customizer Toggle Button (Visible during gameplay) -->
-    <button id="btn-toggle-customizer" class="btn-liquid-glass customizer-toggle-btn">
-      <span>🎨</span> <span class="customizer-btn-text">Tùy Chỉnh Lốp</span>
+    <!-- Customizer Toggle Button -->
+    <button id="btn-toggle-customizer" class="btn-pill customizer-toggle-btn">
+      <span>🎨</span> <span class="customizer-btn-text">Customize</span>
     </button>
 
     <!-- Customization Drawer / Mobile Bottom Sheet -->
-    <aside id="customizer-panel" class="customizer-panel liquid-glass-panel hidden">
+    <aside id="customizer-panel" class="customizer-panel glass-panel hidden">
+      <!-- Drag handle for mobile bottom sheet -->
       <div class="sheet-handle"></div>
 
       <div class="panel-header">
         <div class="panel-title">
-          <span>🛞</span> Xưởng Độ Lốp Si Tình
+          <span>🛞</span> Tire Studio
         </div>
-        <button id="btn-close-panel" class="btn-liquid-glass btn-close" aria-label="Close">✕</button>
+        <button id="btn-close-panel" class="btn-close" aria-label="Close">✕</button>
       </div>
 
       <!-- Navigation Tabs -->
       <div class="tabs-nav">
-        <button class="tab-btn active" data-tab="style">Kiểu Dáng</button>
-        <button class="tab-btn" data-tab="materials">Màu Đất Sét</button>
-        <button class="tab-btn" data-tab="features">Phụ Kiện & Biểu Cảm</button>
+        <button class="tab-btn active" data-tab="style">Style & Rim</button>
+        <button class="tab-btn" data-tab="materials">Clay Colors</button>
+        <button class="tab-btn" data-tab="features">Cute Extras</button>
       </div>
 
       <!-- Panel Body -->
       <div class="panel-body">
         <!-- TAB 1: STYLE & SHAPE -->
         <div id="tab-style" class="tab-content" style="display: flex; flex-direction: column; gap: 14px;">
-          <!-- Quick Presets -->
+          <!-- Presets -->
           <div>
-            <div class="section-label">Mẫu Thiết Kế Nhanh</div>
+            <div class="section-label">Quick Presets</div>
             <div class="presets-grid">
-              <div class="preset-chip btn-liquid-glass" data-preset="tan">
+              <div class="preset-chip" data-preset="tan">
                 <span class="emoji">👑</span>
                 <span>TÂN Pro</span>
               </div>
-              <div class="preset-chip btn-liquid-glass" data-preset="buddy">
+              <div class="preset-chip" data-preset="buddy">
                 <span class="emoji">😃</span>
                 <span>Clay Buddy</span>
               </div>
-              <div class="preset-chip btn-liquid-glass" data-preset="monster">
+              <div class="preset-chip" data-preset="monster">
                 <span class="emoji">🚜</span>
                 <span>Monster</span>
               </div>
-              <div class="preset-chip btn-liquid-glass" data-preset="bubblegum">
+              <div class="preset-chip" data-preset="bubblegum">
                 <span class="emoji">💖</span>
-                <span>Kẹo Ngọt</span>
+                <span>Bubblegum</span>
               </div>
-              <div class="preset-chip btn-liquid-glass" data-preset="golden">
+              <div class="preset-chip" data-preset="golden">
                 <span class="emoji">🏆</span>
-                <span>Hoàng Gia</span>
+                <span>Golden</span>
               </div>
-              <div class="preset-chip btn-liquid-glass" data-preset="tractor">
+              <div class="preset-chip" data-preset="tractor">
                 <span class="emoji">🌾</span>
-                <span>Cày Bừa</span>
+                <span>Tractor</span>
               </div>
             </div>
           </div>
 
           <!-- Tread Pattern -->
           <div>
-            <div class="section-label">Kiểu Gai Lốp (Treads)</div>
+            <div class="section-label">Tread Block Pattern</div>
             <div class="options-grid">
-              <div class="opt-card btn-liquid-glass selected" data-tread="chevron">
-                <span>⚡</span> Gai Chữ V (Chevron)
+              <div class="opt-card selected" data-tread="chevron">
+                <span>⚡</span> Chevron V-Groove
               </div>
-              <div class="opt-card btn-liquid-glass" data-tread="chunky">
-                <span>🧱</span> Gai Vuông (Chunky Cleats)
+              <div class="opt-card" data-tread="chunky">
+                <span>🧱</span> Chunky Cleats
               </div>
-              <div class="opt-card btn-liquid-glass" data-tread="heart">
-                <span>💕</span> Gai Trái Tim (Cute Hearts)
+              <div class="opt-card" data-tread="paddle">
+                <span>🛶</span> Paddle Tracks
               </div>
-              <div class="opt-card btn-liquid-glass" data-tread="paddle">
-                <span>🛶</span> Gai Gạt Nước (Paddle)
+              <div class="opt-card" data-tread="heart">
+                <span>💕</span> Cute Hearts
+              </div>
+              <div class="opt-card" data-tread="smooth">
+                <span>⚪</span> Smooth Slick
               </div>
             </div>
           </div>
 
           <!-- Rim Design -->
           <div>
-            <div class="section-label">Mâm Xe Giữa (Rim Hub)</div>
+            <div class="section-label">Center Rim Design</div>
             <div class="options-grid">
-              <div class="opt-card btn-liquid-glass selected" data-rim="face">
-                <span>😊</span> Mặt Cười Đất Sét
+              <div class="opt-card selected" data-rim="face">
+                <span>😊</span> Cute Smiley Face
               </div>
-              <div class="opt-card btn-liquid-glass" data-rim="star">
-                <span>⭐</span> Ngôi Sao 5 Cánh
+              <div class="opt-card" data-rim="star">
+                <span>⭐</span> 5-Spoke Star
               </div>
-              <div class="opt-card btn-liquid-glass" data-rim="swirl">
-                <span>🌀</span> Kẹo Xoắn Candy
+              <div class="opt-card" data-rim="swirl">
+                <span>🌀</span> Candy Swirl
               </div>
-              <div class="opt-card btn-liquid-glass" data-rim="spokes">
-                <span>⚙️</span> Nan Hoa Cổ Điển
+              <div class="opt-card" data-rim="spokes">
+                <span>⚙️</span> Retro Spokes
+              </div>
+              <div class="opt-card" data-rim="disc">
+                <span>🔘</span> Minimal Disc
               </div>
             </div>
           </div>
 
-          <!-- Sliders -->
+          <!-- Sliders: Dimensions -->
           <div class="control-row">
             <div class="control-header">
-              <span>Đường Kính Lốp</span>
+              <span>Tire Diameter</span>
               <span id="val-diameter" class="control-val">3.2</span>
             </div>
             <input type="range" id="slider-diameter" min="2.2" max="4.5" step="0.1" value="3.2" />
@@ -234,10 +203,18 @@
 
           <div class="control-row">
             <div class="control-header">
-              <span>Độ Rộng Bản Lốp</span>
+              <span>Tire Width</span>
               <span id="val-width" class="control-val">1.8</span>
             </div>
             <input type="range" id="slider-width" min="1.0" max="3.0" step="0.1" value="1.8" />
+          </div>
+
+          <div class="control-row">
+            <div class="control-header">
+              <span>Rim Size Ratio</span>
+              <span id="val-rim-ratio" class="control-val">0.58</span>
+            </div>
+            <input type="range" id="slider-rim-ratio" min="0.4" max="0.75" step="0.02" value="0.58" />
           </div>
         </div>
 
@@ -246,11 +223,11 @@
           <!-- Rubber Color -->
           <div class="control-row">
             <div class="color-picker-row">
-              <span class="section-label" style="margin: 0;">Màu Thân Cao Su</span>
-              <input type="color" id="color-rubber" value="#282a2e" />
+              <span class="section-label" style="margin: 0;">Rubber Color</span>
+              <input type="color" id="color-rubber" value="#2d3036" />
             </div>
             <div class="swatches-row">
-              <div class="swatch" data-target="color-rubber" data-color="#282a2e" style="background: #282a2e;"></div>
+              <div class="swatch" data-target="color-rubber" data-color="#2d3036" style="background: #2d3036;"></div>
               <div class="swatch" data-target="color-rubber" data-color="#191b1f" style="background: #191b1f;"></div>
               <div class="swatch" data-target="color-rubber" data-color="#f78fb3" style="background: #f78fb3;"></div>
               <div class="swatch" data-target="color-rubber" data-color="#70a1ff" style="background: #70a1ff;"></div>
@@ -262,22 +239,38 @@
           <!-- Rim Color -->
           <div class="control-row">
             <div class="color-picker-row">
-              <span class="section-label" style="margin: 0;">Màu Lòng Mâm Xe</span>
-              <input type="color" id="color-rim" value="#3a3e46" />
+              <span class="section-label" style="margin: 0;">Rim Center Color</span>
+              <input type="color" id="color-rim" value="#3c4048" />
             </div>
             <div class="swatches-row">
-              <div class="swatch" data-target="color-rim" data-color="#3a3e46" style="background: #3a3e46;"></div>
+              <div class="swatch" data-target="color-rim" data-color="#3c4048" style="background: #3c4048;"></div>
               <div class="swatch" data-target="color-rim" data-color="#ffffff" style="background: #ffffff;"></div>
               <div class="swatch" data-target="color-rim" data-color="#ffd700" style="background: #ffd700;"></div>
               <div class="swatch" data-target="color-rim" data-color="#4ea8de" style="background: #4ea8de;"></div>
               <div class="swatch" data-target="color-rim" data-color="#ff6b81" style="background: #ff6b81;"></div>
+              <div class="swatch" data-target="color-rim" data-color="#2bd980" style="background: #2bd980;"></div>
+            </div>
+          </div>
+
+          <!-- Accent / Face Color -->
+          <div class="control-row">
+            <div class="color-picker-row">
+              <span class="section-label" style="margin: 0;">Accent / Face Color</span>
+              <input type="color" id="color-accent" value="#ff733b" />
+            </div>
+            <div class="swatches-row">
+              <div class="swatch" data-target="color-accent" data-color="#ff733b" style="background: #ff733b;"></div>
+              <div class="swatch" data-target="color-accent" data-color="#ff4757" style="background: #ff4757;"></div>
+              <div class="swatch" data-target="color-accent" data-color="#ffe600" style="background: #ffe600;"></div>
+              <div class="swatch" data-target="color-accent" data-color="#2ed573" style="background: #2ed573;"></div>
+              <div class="swatch" data-target="color-accent" data-color="#1e90ff" style="background: #1e90ff;"></div>
             </div>
           </div>
 
           <!-- Letter TÂN Color -->
           <div class="control-row">
             <div class="color-picker-row">
-              <span class="section-label" style="margin: 0;">Màu Chữ 3D "TÂN"</span>
+              <span class="section-label" style="margin: 0;">Màu Chữ TÂN (Gold / Clay)</span>
               <input type="color" id="color-letter" value="#ffd166" />
             </div>
             <div class="swatches-row">
@@ -285,73 +278,53 @@
               <div class="swatch" data-target="color-letter" data-color="#ffffff" style="background: #ffffff;"></div>
               <div class="swatch" data-target="color-letter" data-color="#ff733b" style="background: #ff733b;"></div>
               <div class="swatch" data-target="color-letter" data-color="#2ed573" style="background: #2ed573;"></div>
+              <div class="swatch" data-target="color-letter" data-color="#70a1ff" style="background: #70a1ff;"></div>
             </div>
           </div>
 
-          <!-- Accent / Face Color -->
-          <div class="control-row">
-            <div class="color-picker-row">
-              <span class="section-label" style="margin: 0;">Màu Mũi & Miệng Cười</span>
-              <input type="color" id="color-accent" value="#ff733b" />
-            </div>
-            <div class="swatches-row">
-              <div class="swatch" data-target="color-accent" data-color="#ff733b" style="background: #ff733b;"></div>
-              <div class="swatch" data-target="color-accent" data-color="#ff4757" style="background: #ff4757;"></div>
-              <div class="swatch" data-target="color-accent" data-color="#ffe600" style="background: #ffe600;"></div>
-            </div>
-          </div>
-
-          <!-- Roughness Slider -->
+          <!-- Roughness / Glossiness Slider -->
           <div class="control-row">
             <div class="control-header">
-              <span>Độ Nhám Chất Liệu Đất Sét</span>
+              <span>Clay Roughness (Glossy ↔ Matte)</span>
               <span id="val-roughness" class="control-val">0.65</span>
             </div>
             <input type="range" id="slider-roughness" min="0.15" max="0.95" step="0.05" value="0.65" />
           </div>
+
+          <!-- Sidewall Ring Toggle -->
+          <div class="toggle-row">
+            <span style="font-size: 13px; font-weight: 700;">Sidewall Decorative Rings</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggle-sidewall" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
         </div>
 
-        <!-- TAB 3: CUTE EXTRAS, ACCESSORIES & EXPRESSIONS -->
+        <!-- TAB 3: CUTE EXTRAS & ACCESSORIES -->
         <div id="tab-features" class="tab-content" style="display: none; flex-direction: column; gap: 14px;">
-          <!-- Accessories selection -->
-          <div>
-            <div class="section-label">Phụ Kiện Thời Trang (Accessories)</div>
-            <div class="options-grid">
-              <div class="opt-card btn-liquid-glass selected" data-antenna="crown">
-                <span>👑</span> Vương Miện TÂN
-              </div>
-              <div class="opt-card btn-liquid-glass" data-antenna="bow">
-                <span>🎀</span> Nơ Hồng Xinh
-              </div>
-              <div class="opt-card btn-liquid-glass" data-antenna="glasses">
-                <span>🕶️</span> Kính Râm Ngầu
-              </div>
-              <div class="opt-card btn-liquid-glass" data-antenna="scarf">
-                <span>🧣</span> Khăn Quàng Ấm Áp
-              </div>
-              <div class="opt-card btn-liquid-glass" data-antenna="star">
-                <span>⭐</span> Ngôi Sao Vàng
-              </div>
-              <div class="opt-card btn-liquid-glass" data-antenna="none">
-                <span>🚫</span> Không Có
-              </div>
+          <!-- Gyro Face mode -->
+          <div class="toggle-row">
+            <div>
+              <div style="font-size: 13px; font-weight: 700;">Face Gyro Steady</div>
+              <div style="font-size: 11px; color: var(--text-muted);">Face stays upright as tire rolls</div>
             </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggle-gyro" />
+              <span class="toggle-slider"></span>
+            </label>
           </div>
 
-          <!-- Biểu cảm khuôn mặt -->
-          <div>
-            <div class="section-label">Biểu Cảm Khuôn Mặt</div>
-            <div class="options-grid">
-              <div class="opt-card btn-liquid-glass selected" data-expression="happy">
-                <span>😃</span> Tươi Cười Hạnh Phúc
-              </div>
-              <div class="opt-card btn-liquid-glass" data-expression="wink">
-                <span>😉</span> Nháy Mắt Tinh Nghịch
-              </div>
-              <div class="opt-card btn-liquid-glass" data-expression="confident">
-                <span>😎</span> Tự Tin Bản Lĩnh
-              </div>
+          <!-- Earth Face Toggle -->
+          <div class="toggle-row">
+            <div>
+              <div style="font-size: 13px; font-weight: 700;">Cute Earth Face</div>
+              <div style="font-size: 11px; color: var(--text-muted);">Smiling face on planet ocean</div>
             </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggle-earth-face" checked />
+              <span class="toggle-slider"></span>
+            </label>
           </div>
 
           <!-- 3D Tan Text Toggle -->
@@ -366,98 +339,27 @@
             </label>
           </div>
 
-          <!-- Gyro Face mode -->
-          <div class="toggle-row">
-            <div>
-              <div style="font-size: 13px; font-weight: 700;">Mặt Lốp Thăng Bằng</div>
-              <div style="font-size: 11px; color: var(--text-muted);">Mặt cười luôn giữ thẳng đứng khi lốp lăn</div>
+          <!-- Spring Antenna -->
+          <div>
+            <div class="section-label">Đỉnh Lốp / Vương Miện</div>
+            <div class="options-grid">
+              <div class="opt-card selected" data-antenna="crown">
+                <span>👑</span> Vương Miện TÂN
+              </div>
+              <div class="opt-card" data-antenna="star">
+                <span>⭐</span> Ngôi Sao Vàng
+              </div>
+              <div class="opt-card" data-antenna="heart">
+                <span>💖</span> Trái Tim Hồng
+              </div>
+              <div class="opt-card" data-antenna="none">
+                <span>🚫</span> Không Có
+              </div>
             </div>
-            <label class="toggle-switch">
-              <input type="checkbox" id="toggle-gyro" />
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-
-          <!-- Earth Face Toggle -->
-          <div class="toggle-row">
-            <div>
-              <div style="font-size: 13px; font-weight: 700;">Mặt Cười Trái Đất</div>
-              <div style="font-size: 11px; color: var(--text-muted);">Mặt cười má hồng trên đại dương</div>
-            </div>
-            <label class="toggle-switch">
-              <input type="checkbox" id="toggle-earth-face" checked />
-              <span class="toggle-slider"></span>
-            </label>
           </div>
         </div>
       </div>
     </aside>
-
-    <!-- QUESTION MODAL (Màn hình trắc nghiệm 10 câu hỏi) -->
-    <div id="question-modal" class="modal-overlay">
-      <div class="question-card liquid-glass-panel">
-        <div class="question-top-bar">
-          <span id="q-station-badge" class="station-badge">Trạm #1/10 🛞</span>
-          <span class="q-mood-icon">💔</span>
-        </div>
-
-        <h3 id="q-text" class="question-title">Cô ấy gọi bạn lúc 2 giờ sáng. Bạn nghĩ gì?</h3>
-
-        <!-- Options Container -->
-        <div id="q-options" class="options-list">
-          <!-- Dynamically populated choices A, B, C, D -->
-        </div>
-
-        <!-- Humorous Feedback Box -->
-        <div id="q-feedback-box" class="feedback-box" style="display: none;">
-          <div class="feedback-header">
-            <span>💡</span> Tiếng lòng của lốp xe:
-          </div>
-          <p id="q-feedback-text" class="feedback-text"></p>
-        </div>
-
-        <!-- Continue Button -->
-        <button id="btn-next-question" class="btn-liquid-glass btn-continue" style="display: none;">
-          <span>✨</span> TIẾP TỤC LĂN BÁNH
-        </button>
-      </div>
-    </div>
-
-    <!-- ENDING MODAL (Màn hình 3 kết thúc đặc sắc) -->
-    <div id="ending-modal" class="modal-overlay">
-      <div class="ending-card liquid-glass-panel">
-        <div id="ending-badge" class="ending-badge">👑 KẾT THÚC BÍ MẬT</div>
-        <h2 id="ending-title" class="ending-title">THÁNH CHỌN C</h2>
-        
-        <div id="ending-quote" class="ending-quote">
-          “Bạn không cần đáp án đúng. Bạn chỉ cần đáp án C.”
-        </div>
-        
-        <p id="ending-desc" class="ending-desc">
-          Một cái kết huyền thoại dành riêng cho lốp xe kiên định nhất hệ mặt trời!
-        </p>
-
-        <div class="ending-stats">
-          <div class="stat-item liquid-glass-panel">
-            <span class="stat-label">Đáp Án Đã Chọn</span>
-            <span id="stat-answers-summary" class="stat-value">C-C-C-C-C-C-C-C-C-C</span>
-          </div>
-          <div class="stat-item liquid-glass-panel">
-            <span class="stat-label">Danh Hiệu Tình Yêu</span>
-            <span id="stat-title" class="stat-value">Lốp Dự Phòng Huyền Thoại</span>
-          </div>
-        </div>
-
-        <div class="ending-actions">
-          <button id="btn-replay" class="btn-liquid-glass btn-primary-large">
-            <span>🔄</span> CHƠI LẠI HÀNH TRÌNH
-          </button>
-          <button id="btn-snap-ending" class="btn-liquid-glass btn-secondary-large">
-            <span>📸</span> CHỤP KỶ NIỆM
-          </button>
-        </div>
-      </div>
-    </div>
 
     <!-- Mobile Touch Controls HUD -->
     <div class="mobile-hud">
@@ -474,17 +376,17 @@
         </div>
       </div>
 
-      <!-- Action Buttons on Bottom-Right -->
+      <!-- Ergonomic Action Buttons on Bottom-Right -->
       <div class="touch-actions">
-        <button id="touch-honk" class="btn-liquid-glass touch-action-btn btn-honk" title="Còi chip chip">
+        <button id="touch-honk" class="touch-action-btn btn-honk" title="Squeak / Horn">
           <span class="btn-icon">🎺</span>
           <span class="btn-label">SQUEAK</span>
         </button>
-        <button id="touch-turbo" class="btn-liquid-glass touch-action-btn btn-turbo" title="Tăng tốc">
+        <button id="touch-turbo" class="touch-action-btn btn-turbo" title="Turbo Sprint">
           <span class="btn-icon">⚡</span>
           <span class="btn-label">TURBO</span>
         </button>
-        <button id="touch-jump" class="btn-liquid-glass touch-action-btn btn-jump" title="Nhảy nảy">
+        <button id="touch-jump" class="touch-action-btn btn-jump" title="Bounce / Jump">
           <span class="btn-icon">🦘</span>
           <span class="btn-label">JUMP</span>
         </button>
@@ -494,27 +396,23 @@
 
   <!-- Help & Instructions Modal -->
   <div id="help-modal" class="modal-overlay">
-    <div class="modal-card liquid-glass-panel">
+    <div class="modal-card">
       <div class="modal-title">
-        <span>🛞</span> Luật Chơi: Lốp Dự Phòng
+        <span>🛞</span> How to Play
       </div>
       <div class="modal-body">
-        <p>Chào mừng bạn đến với <strong>LỐP DỰ PHÒNG — HÀNH TRÌNH SI TÌNH</strong>!</p>
+        <p>Welcome to <strong>Cute Tire Explorer</strong>! Control a single standalone 3D tire rolling smoothly on a friendly spherical Earth.</p>
         <ul>
-          <li><strong>Mục tiêu:</strong> Lăn chiếc lốp 3D qua 10 trạm câu hỏi tình huống hài hước về tình yêu đơn phương.</li>
-          <li><strong>Điều khiển:</strong> Dùng cần Joystick ảo (trên điện thoại) hoặc phím W/A/S/D (trên máy tính) để lăn bánh trên mặt Trái Đất.</li>
-          <li><strong>Trạm câu hỏi:</strong> Lăn một đoạn trên Trái Đất hoặc bấm nút <strong>💬 Mở Câu</strong> để trả lời câu hỏi trắc nghiệm.</li>
-          <li><strong>3 Kết thúc:</strong>
-            <ul>
-              <li><strong>CHỌN TOÀN C:</strong> Kết thúc bí mật khi chọn C cả 10 câu!</li>
-              <li><strong>SIÊU LỐP:</strong> Khi chọn ≥ 6 đáp án siêu lốp bản lĩnh.</li>
-              <li><strong>THỨC TỈNH:</strong> Dứt áo ra đi, tự tin lăn con đường riêng!</li>
-            </ul>
-          </li>
+          <li><strong>Mobile Joystick:</strong> Drag the left joystick 🛞 in any direction to steer and drive!</li>
+          <li><strong>Jump:</strong> Tap 🦘 to bounce over terrain.</li>
+          <li><strong>Turbo:</strong> Hold ⚡ to sprint at high speeds.</li>
+          <li><strong>Horn:</strong> Tap 🎺 for cute squeaks!</li>
+          <li><strong>Desktop Keys:</strong> W/A/S/D or Arrows, Space to bounce, Shift for turbo, H to honk, C to cycle camera.</li>
+          <li><strong>Customizer:</strong> Tap 🎨 Customize to swap treads, rim faces, and clay colors live!</li>
         </ul>
       </div>
-      <button id="btn-close-help" class="btn-liquid-glass btn-continue" style="align-self: flex-end;">
-        Đã hiểu! Lên đường thôi ✨
+      <button id="btn-close-help" class="btn-pill" style="align-self: flex-end; background: var(--primary); color: white;">
+        Got it! Let's Roll ✨
       </button>
     </div>
   </div>
